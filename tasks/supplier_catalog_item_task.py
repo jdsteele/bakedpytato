@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+
+import logging 
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -9,21 +11,21 @@ from models import Product, ProductConversion
 from models import Scale, ScaleConversion
 from models import SupplierCatalogItem
 
-from session import Session
 import ttystatus
 import uuid
 from decimal import *
+from base_task import BaseTask
 
-class SupplierCatalogItemTask(object):
+logger = logging.getLogger(__name__)
+
+class SupplierCatalogItemTask(BaseTask):
 	
-	def __init__(self):
-		"""Init"""
-		self.session = Session(autocommit=True)
 		
 
 
 	def update_all(self):
 		"""Update All"""
+		logger.debug("Begin update_all()")
 		query = self.session.query(SupplierCatalogItem)
 
 		ts = ttystatus.TerminalStatus(period=0.5)
@@ -51,6 +53,7 @@ class SupplierCatalogItemTask(object):
 		ts.add(ttystatus.ElapsedTime())
 		self.session.commit()
 		ts.finish()
+		logger.debug("End update_all()")
 			
 	def update_one(self, supplier_catalog_item):
 		"""
@@ -99,7 +102,6 @@ class SupplierCatalogItemTask(object):
 			supplier_catalog_item.manufacturer_id = manufacturer_conversion.manufacturer_id
 		else:
 			supplier_catalog_item.manufacturer_id = None
-			print "No ManufacturerConversion Found For", supplier_catalog_item.supplier_id, supplier_catalog_item.manufacturer_identifier
 
 
 	def update_product(self, supplier_catalog_item):
@@ -255,7 +257,7 @@ class SupplierCatalogItemTask(object):
 		try:
 			manufacturer = query.one()
 		except NoResultFound:
-			#print "No ManufacturerConversion Found"
+			logger.warning("No ManufacturerConversion found for supplier_id '%s' manufacturer_identifier '%s'", supplier_id, manufacturer_identifier)
 			return None
 		
 		manufacturer_conversion = ManufacturerConversion()
@@ -288,10 +290,24 @@ class SupplierCatalogItemTask(object):
 			price_control = query.one()
 			return price_control
 		except NoResultFound:
-			#print "No PriceControl Found", supplier_id, 'MID', manufacturer_id, retail, preorder, special
+			#logger.warning(
+			#	"No PriceControl found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
+			#	supplier_id, 
+			#	manufacturer_id, 
+			#	retail, 
+			#	preorder, 
+			#	special
+			#)
 			return None
 		except MultipleResultsFound:
-			print "Duplicate PriceControls found", supplier_id, manufacturer_id, retail, preorder, special
+			logger.warning(
+				"Duplicate PriceControls found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
+				supplier_id, 
+				manufacturer_id, 
+				retail, 
+				preorder, 
+				special
+			)
 			return None
 
 
@@ -315,7 +331,12 @@ class SupplierCatalogItemTask(object):
 		try:
 			product = query.one()
 		except NoResultFound:
-			#print "No Product Conversion Found", supplier_id, manufacturer_id, product_identifier
+			#logger.warning(
+			#	"No ProductConversion found for supplier_id '%s' manufacturer_id '%s' product_identifier '%s'", 
+			#	supplier_id, 
+			#	manufacturer_id, 
+			#	product_identifier, 
+			#)
 			return None
 			
 		product_conversion = ProductConversion()
