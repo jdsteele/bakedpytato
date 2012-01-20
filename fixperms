@@ -2,5 +2,7 @@
 gksudo 'chown -R www-data.www-data /var/www/bakedpytato/*'
 gksudo 'chmod -R ug+rw /var/www/bakedpytato/*'
 gksudo 'mkdir -p /var/log/bakedpytato/'
+gksudo 'chown -R www-data.www-data /var/log/bakedpytato/'
 gksudo 'chown -R www-data.www-data /var/log/bakedpytato/*'
+gksudo 'chmod -R ug+rwx /var/log/bakedpytato/'
 gksudo 'chmod -R ug+rw /var/log/bakedpytato/*'
