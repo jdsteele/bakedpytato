@@ -7,10 +7,11 @@ Priority: optional
 Standards-Version: 3.9.2
 
 Package: equivs-bakedpytato
-Version: 2012.01.19.21.04
+Version: 2012.01.20.14.12
+Replaces: equivs-bakedpytato (<= 2012.01.20.14.12)
 # Maintainer: Your Name <yourname@example.com>
 # Pre-Depends: <comma-separated list of packages>
-Depends: python2.7, python-ttystatus, python-sqlalchemy
+Depends: python2.7, python-ttystatus, python-sqlalchemy (>= 0.7), python-psycopg2
 # Recommends: <comma-separated list of packages>
 # Suggests: <comma-separated list of packages>
 # Provides: <comma-separated list of packages>
