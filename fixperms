@@ -1,6 +1,6 @@
 #!/bin/sh
-sudo chown -R www-data.www-data /var/www/bakedpytato/*
-sudo chmod -R ug+rw /var/www/bakedpytato/*
-mkdir -p /var/log/bakedpytato/
-sudo chown -R www-data.www-data /var/log/bakedpytato/*
-sudo chmod -R ug+rw /var/log/bakedpytato/*
+gksudo 'chown -R www-data.www-data /var/www/bakedpytato/*'
+gksudo 'chmod -R ug+rw /var/www/bakedpytato/*'
+gksudo 'mkdir -p /var/log/bakedpytato/'
+gksudo 'chown -R www-data.www-data /var/log/bakedpytato/*'
+gksudo 'chmod -R ug+rw /var/log/bakedpytato/*'
