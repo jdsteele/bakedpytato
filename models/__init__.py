@@ -15,3 +15,24 @@ from supplier_catalog import SupplierCatalog
 from supplier_catalog_item import SupplierCatalogItem
 from supplier_catalog_item_field import SupplierCatalogItemField
 from supplier_catalog_item_version import SupplierCatalogItemVersion
+
+models = dict()
+models['CategoryConversion'] = CategoryConversion
+models['CustomerIncidental'] = CustomerIncidental
+models['CustomerOrder'] = CustomerOrder
+models['CustomerOrderIncidental'] = CustomerOrderIncidental
+models['CustomerOrderItem'] = CustomerOrderItem
+models['Manufacturer'] = Manufacturer
+models['ManufacturerConversion'] = ManufacturerConversion
+models['PriceControl'] = PriceControl
+models['Product'] = Product
+models['ProductConversion'] = ProductConversion
+models['Scale'] = Scale
+models['ScaleConversion'] = ScaleConversion
+models['Supplier'] = Supplier
+models['SupplierCatalog'] = SupplierCatalog
+models['SupplierCatalogItem'] = SupplierCatalogItem
+models['SupplierCatalogItemField'] = SupplierCatalogItemField
+models['SupplierCatalogItemVersion'] = SupplierCatalogItemVersion
+#models[''] = 
+

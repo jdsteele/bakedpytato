@@ -43,9 +43,7 @@ class SupplierCatalogItemTask(BaseTask):
 
 		self.session.begin()
 		for supplier_catalog_item in query.yield_per(1000):
-			#self.session.begin()
 			self.update_one(supplier_catalog_item)
-			#self.session.commit()
 			self.session.flush()
 			ts['done'] += 1
 		ts.clear()
@@ -233,7 +231,6 @@ class SupplierCatalogItemTask(BaseTask):
 		except NoResultFound:
 			pass
 		category_conversion = CategoryConversion()
-		category_conversion.id = str(uuid.uuid4())
 		category_conversion.manufacturer_id = manufacturer_id
 		category_conversion.supplier_id = supplier_id
 		category_conversion.needle = category_identifier

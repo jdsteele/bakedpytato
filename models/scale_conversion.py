@@ -6,6 +6,6 @@ from base import Base, DefaultMixin
 class ScaleConversion(Base, DefaultMixin):
 	__tablename__ = 'scale_conversions'
 
-	scale_id = Column(UUID)
+	scale_id = Column(UUID(as_uuid=True))
 	scale_identifier = Column(String)
-	supplier_id = Column(UUID)
+	supplier_id = Column(UUID(as_uuid=True))

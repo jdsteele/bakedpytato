@@ -12,7 +12,7 @@ import uuid
 class UUIDMixin(object):
 	@declared_attr
 	def id(cls):
-		return Column(UUID(), primary_key=True, default=uuid.uuid4, unique=True)
+		return Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
 
 
 class TimestampMixin(object):

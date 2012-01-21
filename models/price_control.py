@@ -11,7 +11,7 @@ class PriceControl(Base, DefaultMixin):
 	allow_preorder = Column(Boolean)
 	cost_ratio = Column(Numeric)
 	enable = Column(Boolean)
-	manufacturer_id = Column(UUID)
+	manufacturer_id = Column(UUID(as_uuid=True))
 	normal = Column(Boolean)
 	preorder = Column(Boolean)
 	rank = Column(Integer)
@@ -20,7 +20,7 @@ class PriceControl(Base, DefaultMixin):
 	retail_high = Column(Numeric, default=Decimal('inf'))
 	retail_low = Column(Numeric, default=Decimal(0))
 	special = Column(Boolean)
-	supplier_id = Column(UUID)
+	supplier_id = Column(UUID(as_uuid=True))
 
 
 	def sale(self, cost, retail):

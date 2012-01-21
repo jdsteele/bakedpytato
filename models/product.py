@@ -7,5 +7,5 @@ class Product(Base, DefaultMixin):
 	__tablename__ = 'products'
 
 	identifier = Column(String)
-	manufacturer_id = Column(UUID)
+	manufacturer_id = Column(UUID(as_uuid=True))
 	name = Column(String)
