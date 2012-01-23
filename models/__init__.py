@@ -3,6 +3,8 @@ from customer_incidental import CustomerIncidental
 from customer_order import CustomerOrder
 from customer_order_incidental import CustomerOrderIncidental
 from customer_order_item import CustomerOrderItem
+from customer_shipment_item import CustomerShipmentItem
+from inventory_item import InventoryItem
 from manufacturer import Manufacturer
 from manufacturer_conversion import ManufacturerConversion
 from price_control import PriceControl
@@ -22,6 +24,7 @@ models['CustomerIncidental'] = CustomerIncidental
 models['CustomerOrder'] = CustomerOrder
 models['CustomerOrderIncidental'] = CustomerOrderIncidental
 models['CustomerOrderItem'] = CustomerOrderItem
+models['InventoryItem'] = InventoryItem
 models['Manufacturer'] = Manufacturer
 models['ManufacturerConversion'] = ManufacturerConversion
 models['PriceControl'] = PriceControl

@@ -16,6 +16,7 @@ class SupplierCatalogItem(Base, DefaultMixin):
 	in_stock = Column(Boolean, default=False)
 	manufacturer_id = Column(UUID(as_uuid=True))
 	manufacturer_identifier = Column(String)
+	name = Column(String)
 	phased_out = Column(Boolean, default=False)
 	price_control_id = Column(UUID(as_uuid=True))
 	product_id = Column(UUID(as_uuid=True))

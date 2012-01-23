@@ -7,8 +7,9 @@ from decimal import *
 class CustomerOrderItem(Base, DefaultMixin):
 	__tablename__ = 'customer_order_items'
 
-	customer_order_id = Column(UUID)
+	customer_order_id = Column(UUID(as_uuid=True))
 	price = Column(Numeric)
+	product_id = Column(UUID(as_uuid=True))
 	quantity = Column(Numeric)
 	void = Column(Boolean)
 	
