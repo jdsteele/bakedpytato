@@ -7,6 +7,11 @@ class Product(Base, DefaultMixin):
 	__tablename__ = 'products'
 
 	archived = Column(Boolean)
+	"""
+	archived is True if no SupplierCatalogItems, CustomerOrderItems, 
+	CustomerShipmentItems, or InventoryItems refer to this Product
+	"""
+	
 	catalog_item_count = Column(Integer)
 	category_id = Column(Integer)
 	cost = Column(Numeric)

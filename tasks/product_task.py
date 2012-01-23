@@ -115,6 +115,13 @@ class ProductTask(BaseTask):
 
 	def update_one(self, product):
 		"""Update One"""
+		
+		##FIXME add code for 
+		#	supplier_shipment_item_count
+		#	product_conversion_count
+		#	product_package_count
+		#	catalog_item_count
+		
 		self.update_supplier_catalog_items(product)
 		self.update_inventory_items(product)
 		self.update_customer_order_items(product)
@@ -151,6 +158,9 @@ class ProductTask(BaseTask):
 				product.retail = supplier_catalog_item.retail
 			if product.lock_sale is False:
 				product.sale = supplier_catalog_item.sale
+			product.supplier_catalog_item_id = supplier_catalog_item.id
+		else:
+			product.supplier_catalog_item_id = None
 
 
 	def update_inventory_items(self, product):
