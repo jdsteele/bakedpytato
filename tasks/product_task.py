@@ -118,6 +118,14 @@ class ProductTask(BaseTask):
 		self.update_supplier_catalog_items(product)
 		self.update_inventory_items(product)
 		self.update_customer_order_items(product)
+		if (
+			product.customer_order_item_count > 0 or
+			product.customer_shipment_item_count > 0 or
+			product.inventory_item_count > 0
+		):
+			product.archived = False
+		else:
+			product.archived = True
 
 
 	def update_supplier_catalog_items(self, product):
