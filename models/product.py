@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, DateTime, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
-from decimal import *=.cilmnps
+from decimal import *
 
 from base import Base, DefaultMixin
 
