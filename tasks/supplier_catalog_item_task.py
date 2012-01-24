@@ -354,6 +354,12 @@ class SupplierCatalogItemTask(BaseTask):
 
 	def get_scale_conversion(self, supplier_id, scale_identifier):
 		"""Scale Conversion"""
+		
+		if scale_identifier is None:
+			return None
+		if supplier_id is None:
+			return None
+		
 		query = self.session.query(ScaleConversion)	#.options(FromCache("default", "product_conversion"))
 		query = query.filter(ScaleConversion.supplier_id == supplier_id)
 		query = query.filter(ScaleConversion.scale_identifier == scale_identifier)
@@ -370,8 +376,17 @@ class SupplierCatalogItemTask(BaseTask):
 		try:
 			scale = query.one()
 		except NoResultFound:
-			return None
+			scale = None
 
-		scale_conversion = ScaleConversion()
-		scale_conversion.scale_id = scale.id
-		return scale_conversion
+		if scale is not None:
+			scale_conversion = ScaleConversion()
+			scale_conversion.scale_id = scale.id
+			return scale_conversion
+		else:
+			scale_conversion = ScaleConversion()
+			scale_conversion.scale_id = None
+			scale_conversion.supplier_id = supplier_id
+			scale_conversion.scale_identifier = scale_identifier
+			self.session.add(scale_conversion)
+			self.session.flush()
+			return scale_conversion
