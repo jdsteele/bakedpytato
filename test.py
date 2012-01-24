@@ -1,7 +1,13 @@
 #!/usr/bin/python
+
+#Standard Library
+from datetime import date
+
+#Extended Library
+
+#Application Library
 import cfg
 from tasks import *
-from datetime import date
 
 
 
@@ -9,8 +15,11 @@ from datetime import date
 #task.update_all()
 
 task = ProductTask()
-#task.load_all()
+task.load_all()
 task.update_all()
+
+task = CatalogItemTask()
+task.load_all()
 
 #task = FinancialReportTask()
 #task.run(date(2011,10,01), date(2011,12,31))

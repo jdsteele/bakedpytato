@@ -45,6 +45,8 @@ class PriceControl(Base, DefaultMixin):
 		sale = self.round(sale)
 		return sale.normalize()
 
+
+#*** Deprecated. use priceutil
 	@classmethod
 	def round(cls, value, digits=2):
 		e = 10 ** digits

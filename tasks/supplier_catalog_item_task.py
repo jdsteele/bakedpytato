@@ -1,20 +1,24 @@
-#!/usr/bin/python2.7
-
+#Standard Library
 import logging 
+import uuid
+from decimal import *
 
+#Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+import ttystatus
 
+#Application Library
 from models import CategoryConversion
 from models import Manufacturer, ManufacturerConversion
 from models import PriceControl
 from models import Product, ProductConversion
 from models import Scale, ScaleConversion
 from models import SupplierCatalogItem
+import cfg
 
-import ttystatus
-import uuid
-from decimal import *
-from base_task import BaseTask
+#This Package
+from tasks.base_task import BaseTask
+
 
 logger = logging.getLogger(__name__)
 
@@ -125,17 +129,17 @@ class SupplierCatalogItemTask(BaseTask):
 			supplier_catalog_item.quantity = Decimal(1)
 
 		if supplier_catalog_item.quantity_cost > 0:
-			supplier_catalog_item.cost = PriceControl.round(supplier_catalog_item.quantity_cost / supplier_catalog_item.quantity, 4)
+			supplier_catalog_item.cost = PriceControl.round(supplier_catalog_item.quantity_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.cost = Decimal(0)
 			
 		if supplier_catalog_item.quantity_special_cost > 0:
-			supplier_catalog_item.special_cost = PriceControl.round(supplier_catalog_item.quantity_special_cost / supplier_catalog_item.quantity, 4)
+			supplier_catalog_item.special_cost = PriceControl.round(supplier_catalog_item.quantity_special_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.special_cost = Decimal(0)
 			
 		if supplier_catalog_item.quantity_retail > 0:
-			supplier_catalog_item.retail = PriceControl.round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity)
+			supplier_catalog_item.retail = PriceControl.round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.sale_decimals)
 		else:
 			supplier_catalog_item.retail = Decimal(0)
 
@@ -179,6 +183,9 @@ class SupplierCatalogItemTask(BaseTask):
 
 	def update_price_control(self, supplier_catalog_item):
 		"""Price Control"""
+		
+		#*** TODO handle price_control.allow_advanced
+		
 		if (
 			supplier_catalog_item.supplier_id is not None and
 			supplier_catalog_item.manufacturer_id is not None and
@@ -368,8 +375,3 @@ class SupplierCatalogItemTask(BaseTask):
 		scale_conversion = ScaleConversion()
 		scale_conversion.scale_id = scale.id
 		return scale_conversion
-
-
-if __name__ == '__main__':
-	supplier_catalog_item_task = SupplierCatalogItemTask()
-	supplier_catalog_item_task.update_all()

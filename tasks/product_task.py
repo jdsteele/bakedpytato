@@ -1,21 +1,22 @@
-#!/usr/bin/python2.7
-
+#Standard Library
 import logging 
+import uuid
+from decimal import *
 
+#Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy import or_, desc
+import ttystatus
 
+#Application Library
 from models import CustomerOrderItem, CustomerShipmentItem
 from models import InventoryItem
 from models import Product
 from models import SupplierCatalogItem
 
-import ttystatus
-import uuid
-from decimal import *
-from base_task import BaseTask
-
-import tasks
+#This Package
+from tasks.base_task import BaseTask
+from tasks.supplier_catalog_item_task import SupplierCatalogItemTask
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ class ProductTask(BaseTask):
 			self.session.add(product)
 			
 			supplier_catalog_item_task = SupplierCatalogItemTask()
-			supplier_catalog_item_task.update(supplier_catalog_item)
+			supplier_catalog_item_task.update_one(supplier_catalog_item)
 		
 	def update_all(self):
 		"""Update All"""
@@ -88,7 +89,7 @@ class ProductTask(BaseTask):
 		query = self.session.query(Product)
 
 		ts = ttystatus.TerminalStatus(period=0.5)
-		ts.add(ttystatus.Literal('Loading Products '))
+		ts.add(ttystatus.Literal('Updating Products '))
 		ts.add(ttystatus.Literal(' Elapsed: '))
 		ts.add(ttystatus.ElapsedTime())
 		ts.add(ttystatus.Literal(' Remaining: '))
@@ -128,7 +129,8 @@ class ProductTask(BaseTask):
 		if (
 			product.customer_order_item_count > 0 or
 			product.customer_shipment_item_count > 0 or
-			product.inventory_item_count > 0
+			product.inventory_item_count > 0 or
+			product.force_in_stock == True
 		):
 			product.archived = False
 		else:
@@ -143,6 +145,8 @@ class ProductTask(BaseTask):
 		
 		product.supplier_catalog_item_count = data['supplier_catalog_item_count']
 		product.supplier_phased_out = data['phased_out']
+		product.supplier_stock = data['in_stock']
+		product.supplier_advanced = data['advanced']
 
 		supplier_catalog_item = data['supplier_catalog_item']
 		if supplier_catalog_item is not None:
@@ -159,8 +163,11 @@ class ProductTask(BaseTask):
 			if product.lock_sale is False:
 				product.sale = supplier_catalog_item.sale
 			product.supplier_catalog_item_id = supplier_catalog_item.id
+			product.supplier_special = supplier_catalog_item.special
+
 		else:
 			product.supplier_catalog_item_id = None
+			product.supplier_special = False
 
 
 	def update_inventory_items(self, product):

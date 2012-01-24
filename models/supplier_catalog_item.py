@@ -47,5 +47,4 @@ class SupplierCatalogItem(Base, DefaultMixin):
 	
 	special_cost = Column(Numeric, default=0.0)
 	"""cost per unit during special"""
-	
 	supplier_id = Column(UUID(as_uuid=True))
