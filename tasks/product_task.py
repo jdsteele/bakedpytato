@@ -148,14 +148,15 @@ class ProductTask(BaseTask):
 		product.supplier_stock = data['in_stock']
 		product.supplier_advanced = data['advanced']
 
+		if (not product.lock_scale) and (data['scale_id'] is not None):
+			product.scale_id = data['scale_id']
+		if (not product.lock_category) and (data['category_id'] is not None):
+			product.category_id = data['category_id']
+
 		supplier_catalog_item = data['supplier_catalog_item']
 		if supplier_catalog_item is not None:
 			if product.lock_name is False:
 				product.name = supplier_catalog_item.name
-			if product.lock_category is False:
-				product.category_id = supplier_catalog_item.category_id
-			if product.lock_scale is False:
-				product.scale_id = supplier_catalog_item.scale_id
 			if product.lock_cost is False:
 				product.cost = supplier_catalog_item.cost
 			if product.lock_retail is False:
@@ -221,7 +222,7 @@ class ProductTask(BaseTask):
 		
 		supplier_catalog_items = (query)
 		
-		#*** Find SCI with highest rank having product in stock
+		#*** Find SCI with highest rank having product in stockchilm
 		for supplier_catalog_item in supplier_catalog_items:
 			#print "SCI", supplier_catalog_item.id
 			
