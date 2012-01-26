@@ -139,7 +139,7 @@ class SupplierCatalogItemTask(BaseTask):
 			supplier_catalog_item.special_cost = Decimal(0)
 			
 		if supplier_catalog_item.quantity_retail > 0:
-			supplier_catalog_item.retail = PriceControl.round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.sale_decimals)
+			supplier_catalog_item.retail = PriceControl.round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.retail = Decimal(0)
 

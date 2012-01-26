@@ -13,6 +13,8 @@ from models import CustomerOrderItem, CustomerShipmentItem
 from models import InventoryItem
 from models import Product
 from models import SupplierCatalogItem
+from priceutil import decimal_psych_price
+import cfg
 
 #This Package
 from tasks.base_task import BaseTask
@@ -135,7 +137,9 @@ class ProductTask(BaseTask):
 			product.archived = False
 		else:
 			product.archived = True
-
+		if product.lock_sale is False and product.base_sale > Decimal(0):
+			sale = product.base_sale * (product.ratio / Decimal(100))
+			product.sale = decimal_psych_price(sale, cfg.sale_decimals)
 
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""
@@ -161,8 +165,8 @@ class ProductTask(BaseTask):
 				product.cost = supplier_catalog_item.cost
 			if product.lock_retail is False:
 				product.retail = supplier_catalog_item.retail
-			if product.lock_sale is False:
-				product.sale = supplier_catalog_item.sale
+			if product.lock_base_sale is False:
+				product.base_sale = supplier_catalog_item.sale
 			product.supplier_catalog_item_id = supplier_catalog_item.id
 			product.supplier_special = supplier_catalog_item.special
 

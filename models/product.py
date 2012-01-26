@@ -13,6 +13,9 @@ class Product(Base, DefaultMixin):
 	CustomerShipmentItems, or InventoryItems refer to this Product
 	"""
 	
+	base_sale = Column(Numeric, default=Decimal(0))
+	"""Sale price from SupplierCatalogItem before applying ratio"""
+	
 	catalog_item_count = Column(Integer, default=0)
 	category_id = Column(Integer)
 	cost = Column(Numeric, default=Decimal(0))
@@ -25,6 +28,7 @@ class Product(Base, DefaultMixin):
 	image_url = Column(String)
 	inventory_item_count = Column(Integer, default=0)
 	legacy_flag = Column(Integer, default=0)
+	lock_base_sale = Column(Boolean, default=False)
 	lock_category = Column(Boolean, default=False)
 	lock_cost = Column(Boolean, default=False)
 	lock_name = Column(Boolean, default=False)
@@ -35,8 +39,16 @@ class Product(Base, DefaultMixin):
 	name = Column(String)
 	product_conversion_count = Column(Integer, default=0)
 	product_package_count = Column(Integer, default=0)
+	ratio = Column(Numeric, default=Decimal(100))
+	"""
+	sale price ratio as a percent
+	sale = base_sale * (ratio / 100)
+	useful for applying or cancelling discounts to specific products
+	"""
+	
 	retail = Column(Numeric, default=Decimal(0))
 	sale = Column(Numeric, default=Decimal(0))
+	"""Sale price from SupplierCatalogItem after applying ratio"""
 	scale_id = Column(UUID(as_uuid=True))
 	serial = Column(Integer)
 	shippable = Column(Boolean, default=True)
