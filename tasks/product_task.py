@@ -129,6 +129,7 @@ class ProductTask(BaseTask):
 		self.update_inventory_items(product)
 		self.update_customer_order_items(product)
 		if (
+			product.supplier_catalog_item_count > 0 or
 			product.customer_order_item_count > 0 or
 			product.customer_shipment_item_count > 0 or
 			product.inventory_item_count > 0 or
