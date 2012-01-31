@@ -5,7 +5,6 @@ from decimal import *
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-import ttystatus
 
 #Application Library
 from models import CategoryConversion
@@ -23,27 +22,14 @@ from tasks.base_task import BaseTask
 logger = logging.getLogger(__name__)
 
 class SupplierCatalogItemTask(BaseTask):
-	
-		
-
 
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		query = self.session.query(SupplierCatalogItem)
 
-		ts = ttystatus.TerminalStatus(period=0.5)
-		ts.add(ttystatus.Literal('Updating Catalog Items '))
-		ts.add(ttystatus.Literal(' Elapsed: '))
-		ts.add(ttystatus.ElapsedTime())
-		ts.add(ttystatus.Literal(' Remaining: '))
-		ts.add(ttystatus.RemainingTime('done', 'total'))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.ProgressBar('done', 'total'))
-		ts['total'] = query.count()
-		ts['done'] = 0
+		ts = self.term_stat('Updating Catalog Items', query.count())
+
 
 		self.session.begin()
 		for supplier_catalog_item in query.yield_per(1000):

@@ -10,6 +10,9 @@ session = Session(autocommit=True)
 
 file_name = '/home/jdsteele/Desktop/bowser-inventory-20120130.txt'
 
+
+
+
 #cache barcode_conversions
 query = session.query(BarcodeConversion)
 barcode_conversions = (query)

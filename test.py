@@ -9,15 +9,17 @@ from datetime import date
 import cfg
 from tasks import *
 
+task = SupplierCatalogItemVersionTask()
+task.update_all()
 
 
 #task = SupplierCatalogItemTask()
 #task.update_all()
 
-task = ProductTask()
+#task = ProductTask()
 #task.load_all()
 #task.update_all()
-task.sort()
+#task.sort()
 
 #task = CatalogItemTask()
 #task.load_all()

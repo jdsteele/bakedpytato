@@ -2,6 +2,12 @@
 import cfg
 from tasks import *
 
+task = SupplierCatalogTask()
+task.update_all()
+
+#task = SupplierCatalogItemVersionTask()
+#task.update_all()
+
 task = SupplierCatalogItemTask()
 task.update_all()
 

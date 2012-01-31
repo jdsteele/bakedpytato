@@ -1,8 +1,24 @@
 from session import Session
 import re
+import ttystatus
 
 class BaseTask(object):
 	logref = None
+
+	def term_stat(self, message, count):
+		ts = ttystatus.TerminalStatus(period=0.5)
+		ts.add(ttystatus.Literal(message + ' '))
+		ts.add(ttystatus.Literal(' Elapsed: '))
+		ts.add(ttystatus.ElapsedTime())
+		ts.add(ttystatus.Literal(' Remaining: '))
+		ts.add(ttystatus.RemainingTime('done', 'total'))
+		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
+		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.ProgressBar('done', 'total'))
+		ts['total'] = count
+		ts['done'] = 0
+		return ts
 	
 	def __init__(self):
 		"""Init"""

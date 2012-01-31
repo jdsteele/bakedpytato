@@ -55,10 +55,12 @@ class BarcodeConversionTask(BaseTask):
 			self.cache[barcode] = obj
 			return self.cache[barcode]
 			
-		barcode_conversion = self.get_barcode_conversion(barcode)
-		if barcode_conversion:
+		barcode_conversions = self.get_barcode_conversions(barcode)
+		for barcode_conversion in barcode_conversions:
 			obj = self.convert(barcode, barcode_conversion)
-			self.cache[barcode] = obj
+			if obj:
+				self.cache[barcode] = obj
+				break
 		
 		return self.cache[barcode]
 		
@@ -72,15 +74,14 @@ class BarcodeConversionTask(BaseTask):
 			print "Found Too Many Matches for" . barcode
 		return None
 
-	def get_barcode_conversion(self, barcode):
-		product_id = None
+	def get_barcode_conversions(self, barcode):
+		matched = []
 		for barcode_conversion in self.barcode_conversions:
 			regex = barcode_conversion.regex.lstrip('/').rstrip('/')
 			match = re.match(regex, barcode)
 			if match:
-				return barcode_conversion
-		return None
-				
+				matched.append(barcode_conversion)
+		return matched
 
 	def convert(self, barcode, barcode_conversion):
 		regex = barcode_conversion.regex.lstrip('/').rstrip('/')
