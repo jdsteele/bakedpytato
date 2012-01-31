@@ -16,7 +16,8 @@ from tasks import *
 
 task = ProductTask()
 #task.load_all()
-task.update_all()
+#task.update_all()
+task.sort()
 
 #task = CatalogItemTask()
 #task.load_all()

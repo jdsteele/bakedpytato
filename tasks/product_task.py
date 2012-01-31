@@ -11,10 +11,12 @@ import ttystatus
 #Application Library
 from models import CustomerOrderItem, CustomerShipmentItem
 from models import InventoryItem
+from models import Manufacturer
 from models import Product
 from models import SupplierCatalogItem
 from priceutil import decimal_psych_price
 import cfg
+import sortutil
 
 #This Package
 from tasks.base_task import BaseTask
@@ -142,6 +144,58 @@ class ProductTask(BaseTask):
 			sale = product.base_sale * (product.ratio / Decimal(100))
 			product.sale = decimal_psych_price(sale, cfg.sale_decimals)
 
+	def sort(self):
+		print "Caching Manufacturers..."
+		manufacturers = dict()
+		query = self.session.query(Manufacturer)
+		for manufacturer in query:
+			manufacturers[manufacturer.id] = manufacturer.name
+
+		query = self.session.query(Product)
+		query = query.order_by(Product.sort)
+		
+		sorttable = list()
+		
+		print "Generating List..."
+		
+		for product in query:
+			data = [
+				product.id, 
+				manufacturers[product.manufacturer_id], 
+				product.identifier
+			]
+			sorttable.append(data)
+		
+		def sortkey(s):
+			return (sortutil.alphanum_key(s[1]), sortutil.alphanum_key(s[2]))
+		
+		
+		print "Sorting List..."
+		sorttable.sort(key=sortkey)
+
+		ts = ttystatus.TerminalStatus(period=0.5)
+		ts.add(ttystatus.Literal('Sorting Products '))
+		ts.add(ttystatus.Literal(' Elapsed: '))
+		ts.add(ttystatus.ElapsedTime())
+		ts.add(ttystatus.Literal(' Remaining: '))
+		ts.add(ttystatus.RemainingTime('done', 'total'))
+		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
+		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.ProgressBar('done', 'total'))
+		ts['total'] = len(sorttable)
+		ts['done'] = 0
+
+		for x in xrange(len(sorttable)):
+			(product_id, a, b) = sorttable[x]
+			query = self.session.query(Product)
+			query = query.filter(Product.id == product_id)
+			product = query.one()
+			self.session.begin()
+			product.sort = x
+			self.session.commit()
+			ts['done'] += 1
+
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""
 		data = self.get_supplier_catalog_item(product)
@@ -260,3 +314,4 @@ class ProductTask(BaseTask):
 		#*** we return the SCI with the highest rank
 		data['supplier_catalog_item'] = supplier_catalog_items[-1]
 		return data
+
