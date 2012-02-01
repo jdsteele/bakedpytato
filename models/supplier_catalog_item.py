@@ -1,7 +1,10 @@
+from sqlalchemy import event
 from sqlalchemy import Column, Boolean, DateTime, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from base import Base, DefaultMixin
+
+
 
 class SupplierCatalogItem(Base, DefaultMixin):
 	__tablename__ = 'supplier_catalog_items'
@@ -48,3 +51,4 @@ class SupplierCatalogItem(Base, DefaultMixin):
 	special_cost = Column(Numeric, default=0.0)
 	"""cost per unit during special"""
 	supplier_id = Column(UUID(as_uuid=True))
+
