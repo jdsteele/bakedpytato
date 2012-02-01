@@ -8,7 +8,7 @@ class SupplierCatalog(Base, DefaultMixin):
 	__tablename__ = 'supplier_catalogs'
 
 	file_import_id = Column(UUID(as_uuid=True))
-	filter = Column(String)
+	#filter = Column(String)
 	issue_date = Column(DateTime)
 	next_supplier_catalog_id = Column(UUID(as_uuid=True))
 	prev_supplier_catalog_id = Column(UUID(as_uuid=True))
