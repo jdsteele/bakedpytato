@@ -15,4 +15,4 @@ class SupplierCatalog(Base, DefaultMixin):
 	supplier_catalog_field_count = Column(Integer)
 	supplier_catalog_item_version_count = Column(Integer)
 	supplier_id = Column(UUID(as_uuid=True))
-	supplier_identifier = Column(String)
+	#supplier_identifier = Column(String)
