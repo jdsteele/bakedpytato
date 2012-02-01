@@ -57,7 +57,7 @@ def int_to_uuid(i):
 	return str(u)
 
 table_names = [
-	'barcode_conversions',
+	#'barcode_conversions',
 	#'catalog_items',
 	#'category_conversions',
 	#'customer_incidentals',
@@ -69,13 +69,13 @@ table_names = [
 	#'manufacturer_conversions',
 	#'manufacturers',
 	#'price_controls',
-	'product_barcodes',
+	#'product_barcodes',
 	#'product_conversions',
-	'products',
+	#'products',
 	#'scale_conversions',
 	#'scales',
-	'supplier_catalog_items', 
-	#'supplier_catalog_item_fields', 
+	#'supplier_catalog_items', 
+	'supplier_catalog_item_fields', 
 	#'supplier_catalog_item_versions',
 	#'supplier_catalogs'
 ]

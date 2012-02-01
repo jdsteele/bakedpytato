@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 	BakedPotato — Inventory Management System
@@ -13,29 +12,14 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-import cfg
-from task import *
+from sqlalchemy import Column, DateTime, Numeric, String
+from sqlalchemy.dialects.postgresql import UUID
 
-while(True):
+from model.base_model import BaseModel, DefaultMixin
 
-	task = SupplierCatalogTask()
-	##task.load_all()
-	task.update_all()
+class CustomerOrderIncidentalModel(BaseModel, DefaultMixin):
+	__tablename__ = 'customer_order_incidentals'
 
-	##task = SupplierCatalogItemVersionTask()
-	##task.load_all()
-	##task.update_all()
-
-	##task = SupplierCatalogItemFieldTask()
-	##task.load_all()
-	##task.update_all()
-
-
-	task = SupplierCatalogItemTask()
-	##task.load_all()
-	task.update_all()
-
-	task = ProductTask()
-	task.load_all()
-	task.update_all()
-	task.sort()
+	customer_order_id = Column(UUID)
+	customer_incidental_id = Column(UUID)
+	price = Column(Numeric)

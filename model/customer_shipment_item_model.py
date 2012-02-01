@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 	BakedPotato — Inventory Management System
@@ -13,29 +12,15 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-import cfg
-from task import *
+from sqlalchemy import Column, Boolean, Numeric, String
+from sqlalchemy.dialects.postgresql import UUID
 
-while(True):
+from model.base_model import BaseModel, DefaultMixin
+from decimal import *
 
-	task = SupplierCatalogTask()
-	##task.load_all()
-	task.update_all()
+class CustomerShipmentItemModel(BaseModel, DefaultMixin):
+	__tablename__ = 'customer_shipment_items'
 
-	##task = SupplierCatalogItemVersionTask()
-	##task.load_all()
-	##task.update_all()
-
-	##task = SupplierCatalogItemFieldTask()
-	##task.load_all()
-	##task.update_all()
-
-
-	task = SupplierCatalogItemTask()
-	##task.load_all()
-	task.update_all()
-
-	task = ProductTask()
-	task.load_all()
-	task.update_all()
-	task.sort()
+	customer_order_item_id = Column(UUID(as_uuid=True))
+	quantity = Column(Numeric)
+	void = Column(Boolean)

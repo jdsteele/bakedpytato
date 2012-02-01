@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 	BakedPotato — Inventory Management System
@@ -13,29 +12,15 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-import cfg
-from task import *
+from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
 
-while(True):
+from model.base_model import BaseModel, DefaultMixin
 
-	task = SupplierCatalogTask()
-	##task.load_all()
-	task.update_all()
+class CategoryConversionModel(BaseModel, DefaultMixin):
+	__tablename__ = 'category_conversions'
 
-	##task = SupplierCatalogItemVersionTask()
-	##task.load_all()
-	##task.update_all()
-
-	##task = SupplierCatalogItemFieldTask()
-	##task.load_all()
-	##task.update_all()
-
-
-	task = SupplierCatalogItemTask()
-	##task.load_all()
-	task.update_all()
-
-	task = ProductTask()
-	task.load_all()
-	task.update_all()
-	task.sort()
+	category_id = Column(Integer)	#Yes, Integer, not UUID
+	needle = Column(String)
+	supplier_id = Column(UUID(as_uuid=True))
+	manufacturer_id = Column(UUID(as_uuid=True))
