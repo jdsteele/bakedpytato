@@ -45,15 +45,10 @@ class SupplierCatalogItemTask(BaseTask):
 		ts = self.term_stat('Updating Catalog Items', query.count())
 
 
-		self.session.begin()
 		for supplier_catalog_item in query.yield_per(1000):
 			self.update_one(supplier_catalog_item)
 			self.session.flush()
 			ts['done'] += 1
-		ts.clear()
-		ts.add(ttystatus.Literal(' Committing '))
-		ts.add(ttystatus.ElapsedTime())
-		self.session.commit()
 		ts.finish()
 		logger.debug("End update_all()")
 			
@@ -75,9 +70,6 @@ class SupplierCatalogItemTask(BaseTask):
 			get price_control_id
 			using sale, quantity generate quantity_sale
 		"""
-		
-		
-		
 		self.update_manufacturer(supplier_catalog_item)
 		self.update_product(supplier_catalog_item)
 		self.update_category(supplier_catalog_item)
@@ -359,7 +351,7 @@ class SupplierCatalogItemTask(BaseTask):
 		if supplier_id is None:
 			return None
 		
-		query = self.session.query(ScaleConversionModel)	#.options(FromCache("default", "product_conversion"))
+		query = self.session.query(ScaleConversionModel)
 		query = query.filter(ScaleConversionModel.supplier_id == supplier_id)
 		query = query.filter(ScaleConversionModel.scale_identifier == scale_identifier)
 		
