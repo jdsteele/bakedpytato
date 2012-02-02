@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -24,6 +24,7 @@ class SupplierCatalogModel(BaseModel, DefaultMixin):
 	file_import_id = Column(UUID(as_uuid=True))
 	#filter = Column(String)
 	issue_date = Column(DateTime)
+	lock_issue_date = Column(Boolean, default=False)
 	next_supplier_catalog_id = Column(UUID(as_uuid=True))
 	prev_supplier_catalog_id = Column(UUID(as_uuid=True))
 	supplier_catalog_field_count = Column(Integer)

@@ -12,16 +12,19 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, LargeBinary
 from sqlalchemy.dialects.postgresql import UUID
 
-from model.base_model import BaseModel, UUIDMixin
+from model.base_model import BaseModel, DefaultMixin
 
-class SupplierCatalogFilterModel(BaseModel, UUIDMixin):
-	__tablename__ = 'supplier_catalog_filters'
+class FileImportModel(BaseModel, DefaultMixin):
+	__tablename__ = 'file_imports'
 
-	supplier_id = Column(UUID(as_uuid=True))
+	content = Column(LargeBinary)
+	effective = Column(DateTime)
 	name = Column(String)
-	ghost_stock = Column(Boolean, default=False)
-	ghost_phased_out = Column(Boolean, default=False)
-	ghost_advanced = Column(Boolean, default=True)
+	size = Column(Integer)
+	sha256 = Column(String(64))
+	supplier_catalog_count = Column(Integer, default=0)
+	mutable = Column(Boolean, default=True)
+	lock_issue_date = Column(Boolean, default=False)

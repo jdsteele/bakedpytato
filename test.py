@@ -7,18 +7,14 @@
 #Extended Library
 
 #Application Library
-#import cfg
-#from task import *
-#import plugin
+import cfg
+from task import *
 #from plugin import *
-from model import *
+#from model import *
 
-
-print dir()
-
-#task = SupplierCatalogTask()
+task = SupplierCatalogTask()
+task.load_all()
 #task.update_all()
-
 
 #task = SupplierCatalogItemVersionTask()
 #task.update_all()
