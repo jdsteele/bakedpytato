@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, DateTime, Numeric, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, DateTime, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, UUIDMixin
@@ -20,7 +20,7 @@ from model.base_model import BaseModel, UUIDMixin
 class InventoryItemModel(BaseModel, UUIDMixin):
 	__tablename__ = 'inventory_items'
 
-	product_id = Column(UUID(as_uuid=True))
+	product_id = Column(UUID(as_uuid=True), ForeignKey('products.id'))
 	quantity = Column(Numeric)
-	warehouse_id = Column(UUID(as_uuid=True))
+	warehouse_id = Column(UUID(as_uuid=True), ForeignKey('warehouses.id'))
 	

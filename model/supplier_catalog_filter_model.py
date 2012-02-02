@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, UUIDMixin
@@ -20,7 +20,7 @@ from model.base_model import BaseModel, UUIDMixin
 class SupplierCatalogFilterModel(BaseModel, UUIDMixin):
 	__tablename__ = 'supplier_catalog_filters'
 
-	supplier_id = Column(UUID(as_uuid=True))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 	name = Column(String)
 	ghost_stock = Column(Boolean, default=False)
 	ghost_phased_out = Column(Boolean, default=False)

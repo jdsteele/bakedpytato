@@ -21,13 +21,11 @@ import uuid
 class SupplierCatalogModel(BaseModel, DefaultMixin):
 	__tablename__ = 'supplier_catalogs'
 
-	file_import_id = Column(UUID(as_uuid=True))
-	#filter = Column(String)
+	file_import_id = Column(UUID(as_uuid=True), ForeignKey('file_imports.id'))
 	issue_date = Column(DateTime)
 	lock_issue_date = Column(Boolean, default=False)
-	next_supplier_catalog_id = Column(UUID(as_uuid=True))
-	prev_supplier_catalog_id = Column(UUID(as_uuid=True))
+	next_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
+	prev_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	supplier_catalog_field_count = Column(Integer)
 	supplier_catalog_item_version_count = Column(Integer)
-	supplier_id = Column(UUID(as_uuid=True))
-	#supplier_identifier = Column(String)
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))

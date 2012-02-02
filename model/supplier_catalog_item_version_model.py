@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, ForeignKey, DateTime, Integer, String, Numeric, Boolean
+from sqlalchemy import Column, ForeignKey, DateTime, ForeignKey, Integer, String, Numeric, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, backref
 
@@ -24,11 +24,11 @@ class SupplierCatalogItemVersionModel(BaseModel, DefaultMixin):
 
 	effective = Column(DateTime)
 	ghost = Column(Boolean)
-	next_supplier_catalog_id = Column(UUID(as_uuid=True))
-	prev_supplier_catalog_id = Column(UUID(as_uuid=True))
+	next_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
+	prev_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	row_number = Column(Integer)
-	supplier_catalog_filter_id = Column(UUID(as_uuid=True))
-	supplier_catalog_id = Column(UUID(as_uuid=True))
+	supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
+	supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	
 	#supplier_catalog_id = Column(UUID, ForeignKey('supplier_catalogs.id'))
 	#supplier_catalog_item_field_id = Column(UUID, ForeignKey('supplier_catalog_item_fields.id'))

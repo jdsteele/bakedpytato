@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, UUIDMixin
@@ -20,5 +20,5 @@ from model.base_model import BaseModel, UUIDMixin
 class ProductBarcodeModel(BaseModel, UUIDMixin):
 	__tablename__ = 'product_barcodes'
 
-	product_id = Column(UUID(as_uuid=True))
+	product_id = Column(UUID(as_uuid=True), ForeignKey('products.id'))
 	barcode = Column(String)

@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, DateTime, Numeric, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from decimal import *
 
@@ -31,7 +31,7 @@ class ProductModel(BaseModel, DefaultMixin):
 	"""Sale price from SupplierCatalogItem before applying ratio"""
 	
 	catalog_item_count = Column(Integer, default=0)
-	category_id = Column(Integer)
+	category_id = Column(Integer, ForeignKey('categories.id'))
 	cost = Column(Numeric, default=Decimal(0))
 	customer_order_item_count = Column(Integer, default=0)
 	customer_shipment_item_count = Column(Integer, default=0)
@@ -49,7 +49,7 @@ class ProductModel(BaseModel, DefaultMixin):
 	lock_retail = Column(Boolean, default=False)
 	lock_sale = Column(Boolean, default=False)
 	lock_scale = Column(Boolean, default=False)
-	manufacturer_id = Column(UUID(as_uuid=True))
+	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))
 	name = Column(String)
 	product_conversion_count = Column(Integer, default=0)
 	product_package_count = Column(Integer, default=0)
@@ -63,14 +63,14 @@ class ProductModel(BaseModel, DefaultMixin):
 	retail = Column(Numeric, default=Decimal(0))
 	sale = Column(Numeric, default=Decimal(0))
 	"""Sale price from SupplierCatalogItem after applying ratio"""
-	scale_id = Column(UUID(as_uuid=True))
+	scale_id = Column(UUID(as_uuid=True), ForeignKey('scales.id'))
 	serial = Column(Integer)
 	shippable = Column(Boolean, default=True)
 	sort = Column(Integer, default=0)
 	stock = Column(Numeric, default=Decimal(0))
 	supplier_advanced = Column(Boolean, default=False)
 	supplier_catalog_item_count = Column(Integer, default=0)
-	supplier_catalog_item_id = Column(UUID(as_uuid=True))
+	supplier_catalog_item_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_items.id'))
 	supplier_phased_out = Column(Boolean, default=False)
 	supplier_shipment_item_count = Column(Integer, default=0)
 	supplier_special = Column(Boolean, default=False)

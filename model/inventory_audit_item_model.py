@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, Numeric
+from sqlalchemy import Boolean, Column, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -20,8 +20,8 @@ from model.base_model import BaseModel, DefaultMixin
 class InventoryAuditItemModel(BaseModel, DefaultMixin):
 	__tablename__ = 'inventory_audit_items'
 
-	inventory_audit_id = Column(UUID(as_uuid=True))
-	product_id = Column(UUID(as_uuid=True))
+	inventory_audit_id = Column(UUID(as_uuid=True), ForeignKey('inventory_audits.id'))
+	product_id = Column(UUID(as_uuid=True), ForeignKey('products.id'))
 	shrink = Column(Numeric)
 	quantity = Column(Numeric)
 	absolute = Column(Boolean)

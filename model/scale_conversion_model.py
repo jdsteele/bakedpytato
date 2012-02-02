@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -20,6 +20,6 @@ from model.base_model import BaseModel, DefaultMixin
 class ScaleConversionModel(BaseModel, DefaultMixin):
 	__tablename__ = 'scale_conversions'
 
-	scale_id = Column(UUID(as_uuid=True))
+	scale_id = Column(UUID(as_uuid=True), ForeignKey('scales.id'))
 	scale_identifier = Column(String)
-	supplier_id = Column(UUID(as_uuid=True))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))

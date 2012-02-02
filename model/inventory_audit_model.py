@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Column, Date, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -23,4 +23,4 @@ class InventoryAuditModel(BaseModel, DefaultMixin):
 	audited = Column(Date)
 	inventory_audit_item_count = Column(Integer)
 	name = Column(String)
-	warehouse_id = Column(UUID(as_uuid=True))
+	warehouse_id = Column(UUID(as_uuid=True), ForeignKey('warehouses.id'))

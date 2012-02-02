@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, DateTime, Numeric, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, DateTime, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -23,12 +23,12 @@ class CatalogItemModel(BaseModel, DefaultMixin):
 	aacart_discount = Column(Integer)
 	aacart_man = Column(String)
 	aacart_part = Column(String)
-	category_id = Column(Integer)
+	category_id = Column(Integer, ForeignKey('categories.id'))
 	force_in_stock = Column(Boolean)
-	manufacturer_id = Column(UUID(as_uuid=True))
+	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))
 	phased_out = Column(Boolean)
-	product_id = Column(UUID(as_uuid=True))
-	scale_id = Column(UUID(as_uuid=True))
+	product_id = Column(UUID(as_uuid=True), ForeignKey('products.id'))
+	scale_id = Column(UUID(as_uuid=True), ForeignKey('scales.id'))
 	sort = Column(Integer)
 	stock = Column(Numeric)
 	supplier_advanced = Column(Boolean)

@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, ForeignKey, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -20,6 +20,6 @@ from model.base_model import BaseModel, DefaultMixin
 class ManufacturerConversionModel(BaseModel, DefaultMixin):
 	__tablename__ = 'manufacturer_conversions'
 
-	manufacturer_id = Column(UUID(as_uuid=True))
+	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))
 	manufacturer_identifier = Column(String)
-	supplier_id = Column(UUID(as_uuid=True))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))

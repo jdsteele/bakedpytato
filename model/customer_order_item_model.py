@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, Boolean, Numeric, String
+from sqlalchemy import Column, ForeignKey, Boolean, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -21,9 +21,9 @@ from decimal import *
 class CustomerOrderItemModel(BaseModel, DefaultMixin):
 	__tablename__ = 'customer_order_items'
 
-	customer_order_id = Column(UUID(as_uuid=True))
+	customer_order_id = Column(UUID(as_uuid=True), ForeignKey('customer_orders.id'))
 	price = Column(Numeric)
-	product_id = Column(UUID(as_uuid=True))
+	product_id = Column(UUID(as_uuid=True), ForeignKey('products.id'))
 	quantity = Column(Numeric)
 	void = Column(Boolean)
 	

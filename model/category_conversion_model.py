@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, ForeignKey, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from model.base_model import BaseModel, DefaultMixin
@@ -20,7 +20,7 @@ from model.base_model import BaseModel, DefaultMixin
 class CategoryConversionModel(BaseModel, DefaultMixin):
 	__tablename__ = 'category_conversions'
 
-	category_id = Column(Integer)	#Yes, Integer, not UUID
+	category_id = Column(Integer, ForeignKey('categories.id'))	#Yes, Integer, not UUID
 	needle = Column(String)
-	supplier_id = Column(UUID(as_uuid=True))
-	manufacturer_id = Column(UUID(as_uuid=True))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
+	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))

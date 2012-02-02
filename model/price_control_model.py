@@ -12,7 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 
-from sqlalchemy import Boolean, Column, DateTime, Numeric, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Numeric, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from decimal import *
@@ -25,7 +25,7 @@ class PriceControlModel(BaseModel, DefaultMixin):
 	allow_preorder = Column(Boolean)
 	cost_ratio = Column(Numeric)
 	enable = Column(Boolean)
-	manufacturer_id = Column(UUID(as_uuid=True))
+	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))
 	normal = Column(Boolean)
 	preorder = Column(Boolean)
 	rank = Column(Integer)
@@ -34,7 +34,7 @@ class PriceControlModel(BaseModel, DefaultMixin):
 	retail_high = Column(Numeric, default=Decimal('inf'))
 	retail_low = Column(Numeric, default=Decimal(0))
 	special = Column(Boolean)
-	supplier_id = Column(UUID(as_uuid=True))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 
 
 	def sale(self, cost, retail):
