@@ -29,9 +29,12 @@ class BaseTask(object):
 		ts.add(ttystatus.Literal(' '))
 		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
 		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.Integer('sub_done'))
+		ts.add(ttystatus.Literal(' '))
 		ts.add(ttystatus.ProgressBar('done', 'total'))
 		ts['total'] = count
 		ts['done'] = 0
+		ts['sub_done'] = 0
 		return ts
 	
 	def __init__(self):

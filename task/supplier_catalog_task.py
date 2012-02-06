@@ -27,36 +27,20 @@ from model import SupplierCatalogModel
 from model import SupplierCatalogFilterModel
 from model import SupplierCatalogItemModel
 import cfg
-import plugin
 
 #This Package
-from task.base_task import BaseTask
-
+from task.base_supplier_catalog_task import BaseSupplierCatalogTask
 
 logger = logging.getLogger(__name__)
 
-class SupplierCatalogTask(BaseTask):
-
-	def load_plugins(self):
-		"""Load Plugins"""
-		plugins = dict()
-		query = self.session.query(SupplierCatalogFilterModel)
-		for supplier_catalog_filter in query:
-			plugin_name = supplier_catalog_filter.name + 'Plugin'
-			if plugin_name in vars(plugin):
-				PluginClass = getattr(plugin, plugin_name)
-				plugins[plugin_name] = PluginClass(supplier_catalog_filter)
-			else:
-				logger.warning("Plugin %s Not Found", plugin_name)
-		return plugins
-
+class SupplierCatalogTask(BaseSupplierCatalogTask):
 
 	def load_all(self):
 		"""Load All"""
 		logger.debug("Begin load_all()")
 		plugins = self.load_plugins()
 		query = self.session.query(FileImportModel)
-		ts = self.term_stat('Load All', query.count())
+		ts = self.term_stat('SupplierCatalog Load All', query.count())
 		for file_import in query.yield_per(1):
 			#print file_import.name
 			for plug in plugins.itervalues():

@@ -12,6 +12,7 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
 #Standard Library
+import csv
 import logging 
 import re
 from datetime import datetime
@@ -30,17 +31,14 @@ from datetime import datetime
 
 
 #This Package
-from plugin.base_plugin import BasePlugin
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
 
 logger = logging.getLogger(__name__)
 
-class SupplierCatalogBowserPlugin(BasePlugin):
+class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 	
-	supplier_catalog_filter = None
-
-	def __init__(self, supplier_catalog_filter):
-		BasePlugin.__init__(self)
-		self.supplier_catalog_filter = supplier_catalog_filter
+	column_names11 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Description2', 'Retail', 'Discount']
+	column_names10 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Retail', 'Discount']
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -51,12 +49,28 @@ class SupplierCatalogBowserPlugin(BasePlugin):
 			return True
 		return False
 
-	""" *** Getter Functions *** """
-	def supplier_id(self):
-		return self.supplier_catalog_filter.supplier_id
-
-	def supplier_catalog_filter_id(self):
-		return self.supplier_catalog_filter.id
+	def get_items(self, supplier_catalog):
+		content = supplier_catalog.file_import.content
+		lines = re.split("\n", content)
+		reader = csv.reader(lines, delimiter="\t")
+		for row in reader:
+			l = len(row)
+			if l == 10:
+				column_names = self.column_names10
+			elif l == 11:
+				column_names = self.column_names11
+			else:
+				logger.warning("Row has incorrect length: expected 10-11, got %i '%s'", l, row)
+				continue
+				
+			item = dict()
+			i = 0
+			for column_name in column_names:
+				field = row[i]
+				field = field.decode('latin_1').encode('utf-8')
+				item[column_name] = field
+				i += 1
+			yield item
 		
 	def issue_date(self, file_import):
 

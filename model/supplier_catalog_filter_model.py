@@ -25,3 +25,4 @@ class SupplierCatalogFilterModel(BaseModel, UUIDMixin):
 	ghost_stock = Column(Boolean, default=False)
 	ghost_phased_out = Column(Boolean, default=False)
 	ghost_advanced = Column(Boolean, default=True)
+	version_model = Column(String)

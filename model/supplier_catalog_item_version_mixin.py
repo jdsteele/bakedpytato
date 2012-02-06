@@ -15,23 +15,39 @@
 from sqlalchemy import Column, ForeignKey, DateTime, ForeignKey, Integer, String, Numeric, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.declarative import declared_attr
 
-from model.base_model import BaseModel, DefaultMixin
 import uuid
 
-class SupplierCatalogItemVersionModel(BaseModel, DefaultMixin):
-	__tablename__ = 'supplier_catalog_item_versions'
+class SupplierCatalogItemVersionMixin(object):
 
 	effective = Column(DateTime)
-	ghost = Column(Boolean)
+	ghost = Column(Boolean, default=False)
+	row_number = Column(Integer)
+		
+	@declared_attr
+	def supplier_catalog_item_field_id(cls):
+		return Column(
+			UUID(as_uuid=True), 
+			ForeignKey('supplier_catalog_item_fields.id')
+		)
+
+	@declared_attr
+	def supplier_catalog_filter_id(cls):
+		return Column(
+			UUID(as_uuid=True), 
+			ForeignKey('supplier_catalog_filters.id')
+		)
+
+	@declared_attr
+	def supplier_catalog_id(cls):
+		return Column(
+			UUID(as_uuid=True), 
+			ForeignKey('supplier_catalogs.id')
+		)
+
 	#next_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	#prev_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
-	row_number = Column(Integer)
-	#supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
-	#supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
-	
-	#supplier_catalog_id = Column(UUID, ForeignKey('supplier_catalogs.id'))
-	#supplier_catalog_item_field_id = Column(UUID, ForeignKey('supplier_catalog_item_fields.id'))
 
-	#supplier_catalog = relationship('SupplierCatalog', backref=backref('supplier_catalog_item_versions', order_by=DefaultMixin.id))
-	#supplier_catalog_item_field = relationship('SupplierCatalogItemField', backref=backref('supplier_catalog_item_versions', order_by=DefaultMixin.id))
+	#supplier_catalog = relationship('SupplierCatalog', backref=backref('supplier_catalog_item_versions')
+	#supplier_catalog_item_field = relationship('SupplierCatalogItemField', backref=backref('supplier_catalog_item_versions'))

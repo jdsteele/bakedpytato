@@ -17,14 +17,14 @@ import pkgutil
 __all__ = []
 
 for importer, package_name, _ in pkgutil.iter_modules([__name__]):
-	if package_name == 'base_' + __name__:
+	if package_name.startswith('base_'):
 		continue
 	if not package_name.endswith(__name__):
 		continue
 	full_package_name = __name__ + ('.%s' % package_name)
 	module = importer.find_module(package_name).load_module(full_package_name)
 	for attr in dir(module):
-		if attr == 'Base' + __name__.capitalize():
+		if attr.startswith('Base'):
 			continue
 		if not attr.endswith(__name__.capitalize()):
 			continue

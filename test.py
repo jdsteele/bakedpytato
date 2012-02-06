@@ -9,16 +9,28 @@
 #Application Library
 import cfg
 from task import *
+import cProfile
+import pstats
+
+
+
 #from plugin import *
 #from model import *
 
-task = SupplierCatalogTask()
-task.load_all()
+#task = SupplierCatalogTask()
+#cProfile.run( 'task.load_all()' , 'fooprof')
+
+
 #task.update_all()
 
-#task = SupplierCatalogItemVersionTask()
-#task.update_all()
+task1 = SupplierCatalogItemVersionTask()
+cProfile.run( 'task1.load()' , 'fooprof')
 
+#task2 = SupplierCatalogItemFieldTask()
+
+#task2.update_all()
+
+#task1.update_all()
 
 #task = SupplierCatalogItemTask()
 #task.update_all()
@@ -36,3 +48,6 @@ task.load_all()
 
 #task = SupplierCatalogItemFieldTask()
 #task.update_all()
+
+p = pstats.Stats('fooprof')
+p.sort_stats('cumulative').print_stats(40)

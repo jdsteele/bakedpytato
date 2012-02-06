@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 	BakedPotato — Inventory Management System
@@ -13,29 +12,8 @@
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
-import cfg
-from task import *
+from model.base_model import BaseModel, DefaultMixin
+from model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
 
-while(True):
-
-	task = SupplierCatalogTask()
-	task.load_all()
-	task.update_all()
-
-	task = SupplierCatalogItemVersionTask()
-	task.load()
-	##task.update_all()
-
-	##task = SupplierCatalogItemFieldTask()
-	##task.load_all()
-	##task.update_all()
-
-
-	task = SupplierCatalogItemTask()
-	##task.load_all()
-	task.update_all()
-
-	task = ProductTask()
-	task.load_all()
-	task.update_all()
-	task.sort()
+class SupplierCatalogItemHeartlandVersionModel(BaseModel, DefaultMixin, SupplierCatalogItemVersionMixin):
+	__tablename__ = 'supplier_catalog_item_heartland_versions'
