@@ -17,14 +17,14 @@ import pstats
 #from plugin import *
 #from model import *
 
-#task = SupplierCatalogTask()
-#cProfile.run( 'task.load_all()' , 'fooprof')
+task = SupplierCatalogTask()
+cProfile.run( 'task.load()' , 'fooprof')
 
 
 #task.update_all()
 
-task1 = SupplierCatalogItemVersionTask()
-cProfile.run( 'task1.load()' , 'fooprof')
+#task1 = SupplierCatalogItemVersionTask()
+#cProfile.run( 'task1.load()' , 'fooprof')
 
 #task2 = SupplierCatalogItemFieldTask()
 
@@ -33,7 +33,7 @@ cProfile.run( 'task1.load()' , 'fooprof')
 #task1.update_all()
 
 #task = SupplierCatalogItemTask()
-#task.update_all()
+#cProfile.run( 'task.update()' , 'fooprof')
 
 #task = ProductTask()
 #task.load_all()

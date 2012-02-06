@@ -15,6 +15,7 @@
 #Standard Library
 import logging 
 import uuid
+from datetime import datetime
 from decimal import *
 
 #Extended Library
@@ -32,22 +33,44 @@ from model import SupplierCatalogItemModel
 #This Package
 import priceutil
 from task.base_task import BaseTask
+from task.setting_task import SettingTask
 
 logger = logging.getLogger(__name__)
 
 class SupplierCatalogItemTask(BaseTask):
 
-	def update_all(self):
+	def update(self):
+		"""Update"""
+		logger.debug("Begin update()")
+		self.update_modified()
+		logger.debug("End update()")
+		
+
+	def update_modified(self):
+		logger.debug("Begin update_modified()")
+		
+		start_time = datetime.now()
+		
+		modified_since = SettingTask().get(__name__, 'update.last_modified', datetime(1970,1,1))
+		logger.info("Update ModifiedSince %s", modified_since)
+		self.update_all(modified_since)
+		SettingTask().set(__name__, 'update.last_modified', start_time)
+		logger.debug("End update_modified()")
+
+
+	def update_all(self, modified_since=None):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		query = self.session.query(SupplierCatalogItemModel)
+		if modified_since:
+			query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
 
-		ts = self.term_stat('Updating Catalog Items', query.count())
-
+		ts = self.term_stat('SupplierCatalogItem Update', query.count())
 
 		for supplier_catalog_item in query.yield_per(1000):
+			#self.session.begin(subtransactions=True)
 			self.update_one(supplier_catalog_item)
-			self.session.flush()
+			#self.session.commit()
 			ts['done'] += 1
 		ts.finish()
 		logger.debug("End update_all()")
@@ -70,16 +93,16 @@ class SupplierCatalogItemTask(BaseTask):
 			get price_control_id
 			using sale, quantity generate quantity_sale
 		"""
+		self.session.begin(subtransactions=True)
 		self.update_manufacturer(supplier_catalog_item)
 		self.update_product(supplier_catalog_item)
 		self.update_category(supplier_catalog_item)
 		self.update_scale(supplier_catalog_item)
-		#supplier_catalog_item.set_debug(True)
 		self.update_price_control(supplier_catalog_item)
-		#supplier_catalog_item.set_debug(False)
-
+		self.session.commit()
 
 	def update_manufacturer(self, supplier_catalog_item):
+		self.session.begin(subtransactions=True)
 		"""Update Manufacturer"""
 		#print (
 		#	"Update Manufacturer", 
@@ -96,9 +119,11 @@ class SupplierCatalogItemTask(BaseTask):
 			supplier_catalog_item.manufacturer_id = manufacturer_conversion.manufacturer_id
 		else:
 			supplier_catalog_item.manufacturer_id = None
+		self.session.commit()
 
 
 	def update_product(self, supplier_catalog_item):
+		self.session.begin(subtransactions=True)
 		"""Product Conversion"""
 		if (
 			supplier_catalog_item.supplier_id is not None and
@@ -134,9 +159,11 @@ class SupplierCatalogItemTask(BaseTask):
 			supplier_catalog_item.retail = priceutil.decimal_round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.retail = Decimal(0)
+		self.session.commit()
 
 	def update_category(self, supplier_catalog_item):
 		"""Category Conversion"""
+		self.session.begin(subtransactions=True)
 		if (
 			supplier_catalog_item.supplier_id is not None and
 			supplier_catalog_item.manufacturer_id is not None and
@@ -153,10 +180,12 @@ class SupplierCatalogItemTask(BaseTask):
 				supplier_catalog_item.category_id = None
 		else:
 			supplier_catalog_item.category_id = None
+		self.session.commit()
 
 
 	def update_scale(self, supplier_catalog_item):
 		"""Scale Conversion"""
+		self.session.begin(subtransactions=True)
 		if (
 			supplier_catalog_item.supplier_id is not None and
 			supplier_catalog_item.scale_identifier is not None
@@ -171,11 +200,12 @@ class SupplierCatalogItemTask(BaseTask):
 				supplier_catalog_item.scale_id = None
 		else:
 			supplier_catalog_item.scale_id = None
+		self.session.commit()
 
 
 	def update_price_control(self, supplier_catalog_item):
 		"""Price Control"""
-		
+		self.session.begin(subtransactions=True)
 		#*** TODO handle price_control.allow_advanced
 		
 		if (
@@ -216,6 +246,7 @@ class SupplierCatalogItemTask(BaseTask):
 			supplier_catalog_item.sale = 0
 			supplier_catalog_item.price_control_id = None
 			supplier_catalog_item.rank = 0
+		self.session.commit()
 
 
 	def get_category_conversion(self, supplier_id, manufacturer_id, category_identifier):

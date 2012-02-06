@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
 #Standard Library
@@ -62,19 +62,25 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		query = self.session.query(SupplierCatalogModel)
 		self.ts = self.term_stat('SupplierCatalogItemVersion Load All', query.count())
 		for supplier_catalog in query.yield_per(10):
-			self.load_from_supplier_catalog(supplier_catalog)
+			self.load_one(supplier_catalog)
 			self.ts['done'] += 1
 		self.ts.finish()
 		logger.debug("End load_all()")
+		
+	def load_one(self, supplier_catalog):
+		self.sesion.begin(subtransactions=True)
+		self.load_from_supplier_catalog(supplier_catalog)
+		self.sesion.commit()
 			
 	def load_from_supplier_catalog(self, supplier_catalog):
+		self.session.begin(subtransactions=True)
+
 		if not supplier_catalog.supplier_catalog_filter_id in self.plugins:
 			logger.warning("Plugin %s Not Found", supplier_catalog.supplier_catalog_filter_id)
 			return None
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		self.ts['sub_done'] = 0
 		row_number = 0
-		self.session.begin()
 
 		for row in plug.get_items(supplier_catalog):
 			self.ts['sub_done'] += 1
@@ -94,10 +100,10 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 				continue
 			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, j)
 			self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
-			self.session.flush()
 		self.session.commit()
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, j):
+		self.session.begin(subtransactions=True)
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		checksum = hashlib.sha1(j).hexdigest()
 		
@@ -113,9 +119,11 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		supplier_catalog_item_field.checksum = checksum
 		supplier_catalog_item_field.supplier_id = supplier_catalog.supplier_id
 		supplier_catalog_item_field.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+		self.session.commit()
 		return supplier_catalog_item_field
 
 	def load_supplier_catalog_item_version(self, supplier_catalog, supplier_catalog_item_field, row_number):
+		self.session.begin(subtransactions=True)
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		model_name = plug.version_model()  + 'Model'
 		VersionModel = getattr(model, model_name)
@@ -133,10 +141,12 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		supplier_catalog_item_version.row_number = row_number
 		supplier_catalog_item_version.effective = supplier_catalog.issue_date
 		supplier_catalog_item_version.ghost = False
+		self.session.commit()
 
 
 	def update_all(self):
 		logger.debug("Begin update_all()")
+		self.session.begin(subtransactions=True)
 		query = self.session.query(SupplierCatalogModel)
 
 		ts = self.term_stat("Updating SCIV From SC", query.count())
@@ -144,9 +154,11 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			self.update_from_supplier_catalog(supplier_catalog)
 			ts['done'] += 1
 		ts.finish()
+		self.session.commit()
 		logger.debug("End update_all()")
 	
 	def update_from_supplier_catalog(self, supplier_catalog):
+		self.session.begin(subtransactions=True)
 		query = self.session.query(SupplierCatalogItemVersionModel)
 		query = query.filter(SupplierCatalogItemVersionModel.supplier_catalog_id == supplier_catalog.id)
 
@@ -155,3 +167,4 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		values['next_supplier_catalog_id'] = supplier_catalog.next_supplier_catalog_id
 		values['effective'] = supplier_catalog.issue_date
 		query.update(values, synchronize_session=False)
+		self.session.commit()

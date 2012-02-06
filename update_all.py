@@ -19,7 +19,7 @@ from task import *
 while(True):
 
 	task = SupplierCatalogTask()
-	task.load_all()
+	task.load()
 	task.update_all()
 
 	task = SupplierCatalogItemVersionTask()

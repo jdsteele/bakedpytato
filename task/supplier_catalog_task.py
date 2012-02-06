@@ -14,6 +14,7 @@
 #Standard Library
 import logging 
 import uuid
+from datetime import datetime
 from decimal import *
 
 #Extended Library
@@ -30,16 +31,37 @@ import cfg
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
+from task.setting_task import SettingTask
 
 logger = logging.getLogger(__name__)
 
 class SupplierCatalogTask(BaseSupplierCatalogTask):
 
-	def load_all(self):
+	def load(self):
+		"""Update"""
+		logger.debug("Begin load()")
+		self.load_modified()
+		logger.debug("End load()")
+		
+
+	def load_modified(self):
+		logger.debug("Begin load_modified()")
+		
+		start_time = datetime.now()
+		
+		modified_since = SettingTask().get(__name__, 'load.last_modified', datetime(1970,1,1))
+		logger.info("Load ModifiedSince %s", modified_since)
+		self.load_all(modified_since)
+		SettingTask().set(__name__, 'load.last_modified', start_time)
+		logger.debug("End load_modified()")
+
+	def load_all(self, modified_since=None):
 		"""Load All"""
 		logger.debug("Begin load_all()")
 		plugins = self.load_plugins()
 		query = self.session.query(FileImportModel)
+		if modified_since:
+			query = query.filter(FileImportModel.modified >= modified_since)
 		ts = self.term_stat('SupplierCatalog Load All', query.count())
 		for file_import in query.yield_per(1):
 			#print file_import.name
