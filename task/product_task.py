@@ -100,7 +100,6 @@ class ProductTask(BaseTask):
 			ts['done'] += 1
 		self.session.commit()
 		ts.finish()
-		self.session.commit()
 		logger.debug("End update_all()")
 
 
