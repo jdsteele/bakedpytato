@@ -19,7 +19,7 @@ from decimal import *
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, asc
 import ttystatus
 
 #Application Library
@@ -286,16 +286,16 @@ class ProductTask(BaseTask):
 		query = self.session.query(SupplierCatalogItemModel)
 		query = query.filter(SupplierCatalogItemModel.product_id == product.id)
 		query = query.filter(SupplierCatalogItemModel.rank > 0)
-		query.order_by(desc(SupplierCatalogItemModel.rank))
+		query.order_by(asc(SupplierCatalogItemModel.rank))
 		
 		count = data['supplier_catalog_item_count'] = query.count()
 		
 		if count == 0:
 			return data
+	
+		supplier_catalog_items = query.all()
 		
-		supplier_catalog_items = (query)
-		
-		#*** Find SCI with highest rank having product in stockchilm
+		#*** Find SCI with highest rank having product in stock
 		for supplier_catalog_item in supplier_catalog_items:
 			#print "SCI", supplier_catalog_item.id
 			

@@ -32,12 +32,12 @@ import pstats
 
 #task1.update_all()
 
-task = SupplierCatalogItemTask()
-cProfile.run( 'task.update()' , 'fooprof')
+#task = SupplierCatalogItemTask()
+#cProfile.run( 'task.update()' , 'fooprof')
 
-#task = ProductTask()
+task = ProductTask()
 #task.load_all()
-#task.update_all()
+cProfile.run('task.update_all()', 'fooprof')
 #task.sort()
 
 #task = CatalogItemTask()
