@@ -17,8 +17,8 @@ import pstats
 #from plugin import *
 #from model import *
 
-task = SupplierCatalogTask()
-cProfile.run( 'task.load()' , 'fooprof')
+#task = SupplierCatalogTask()
+#cProfile.run( 'task.load()' , 'fooprof')
 
 
 #task.update_all()
@@ -32,8 +32,8 @@ cProfile.run( 'task.load()' , 'fooprof')
 
 #task1.update_all()
 
-#task = SupplierCatalogItemTask()
-#cProfile.run( 'task.update()' , 'fooprof')
+task = SupplierCatalogItemTask()
+cProfile.run( 'task.update()' , 'fooprof')
 
 #task = ProductTask()
 #task.load_all()

@@ -33,7 +33,7 @@ while(True):
 
 	task = SupplierCatalogItemTask()
 	##task.load_all()
-	task.update_all()
+	task.update()
 
 	task = ProductTask()
 	task.load_all()
