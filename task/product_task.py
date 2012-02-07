@@ -162,7 +162,7 @@ class ProductTask(BaseTask):
 		print "Sorting List..."
 		sorttable.sort(key=sortkey)
 
-		ts = term_stat('Products Sort', len(sorttable))
+		ts = self.term_stat('Products Sort', len(sorttable))
 
 		for x in xrange(len(sorttable)):
 			(product_id, a, b) = sorttable[x]
