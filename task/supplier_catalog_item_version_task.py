@@ -47,7 +47,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
 			logger.info("Loading ItemVersions for SupplierCatalog %s", supplier_catalog.id)
 			self.load_from_supplier_catalog(supplier_catalog)
-			self.session.begin()
+			self.session.begin(subtransactions=True)
 			supplier_catalog.item_versions_loaded = True
 			self.session.commit()
 		else:
