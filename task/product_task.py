@@ -43,6 +43,7 @@ class ProductTask(BaseTask):
 	def load_all(self):
 		"""Load All"""
 		logger.debug("Begin load_all()")
+		self.session.begin(subtransactions=True)
 		query = self.session.query(SupplierCatalogItemModel)
 		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier != None)
 		query = query.filter(SupplierCatalogItemModel.manufacturer_id != None)
@@ -58,27 +59,11 @@ class ProductTask(BaseTask):
 			)
 		)
 
-		ts = ttystatus.TerminalStatus(period=0.5)
-		ts.add(ttystatus.Literal('Loading Products '))
-		ts.add(ttystatus.Literal(' Elapsed: '))
-		ts.add(ttystatus.ElapsedTime())
-		ts.add(ttystatus.Literal(' Remaining: '))
-		ts.add(ttystatus.RemainingTime('done', 'total'))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.ProgressBar('done', 'total'))
-		ts['total'] = query.count()
-		ts['done'] = 0
+		ts = self.term_stat('Products Load', query.count())
 
-		self.session.begin()
 		for supplier_catalog_item in query.yield_per(1000):
 			self.load_one(supplier_catalog_item)
-			self.session.flush()
 			ts['done'] += 1
-		ts.clear()
-		ts.add(ttystatus.Literal(' Committing '))
-		ts.add(ttystatus.ElapsedTime())
 		self.session.commit()
 		ts.finish()
 		logger.debug("End load_all()")
@@ -86,7 +71,7 @@ class ProductTask(BaseTask):
 
 	def load_one(self, supplier_catalog_item):
 		"""Load One"""
-		
+		self.session.begin(subtransactions=True)
 		query = self.session.query(ProductModel)
 		query = query.filter(ProductModel.manufacturer_id == supplier_catalog_item.manufacturer_id)
 		query = query.filter(ProductModel.identifier == supplier_catalog_item.product_identifier)
@@ -100,35 +85,22 @@ class ProductTask(BaseTask):
 			
 			supplier_catalog_item_task = SupplierCatalogItemTask()
 			supplier_catalog_item_task.update_one(supplier_catalog_item)
+		self.session.commit()
 		
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
+		self.session.begin(subtransactions=True)
 		query = self.session.query(ProductModel)
 
-		ts = ttystatus.TerminalStatus(period=0.5)
-		ts.add(ttystatus.Literal('Updating Products '))
-		ts.add(ttystatus.Literal(' Elapsed: '))
-		ts.add(ttystatus.ElapsedTime())
-		ts.add(ttystatus.Literal(' Remaining: '))
-		ts.add(ttystatus.RemainingTime('done', 'total'))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.ProgressBar('done', 'total'))
-		ts['total'] = query.count()
-		ts['done'] = 0
+		ts = self.term_stat('Products Update', query.count())
 
-		self.session.begin()
 		for product in query.yield_per(1000):
 			self.update_one(product)
-			self.session.flush()
 			ts['done'] += 1
-		ts.clear()
-		ts.add(ttystatus.Literal(' Committing '))
-		ts.add(ttystatus.ElapsedTime())
 		self.session.commit()
 		ts.finish()
+		self.session.commit()
 		logger.debug("End update_all()")
 
 
@@ -140,6 +112,8 @@ class ProductTask(BaseTask):
 		#	product_conversion_count
 		#	product_package_count
 		#	catalog_item_count
+
+		self.session.begin(subtransactions=True)
 		
 		self.update_supplier_catalog_items(product)
 		self.update_inventory_items(product)
@@ -157,9 +131,11 @@ class ProductTask(BaseTask):
 		if product.lock_sale is False and product.base_sale > Decimal(0):
 			sale = product.base_sale * (product.ratio / Decimal(100))
 			product.sale = decimal_psych_price(sale, cfg.sale_decimals)
+		self.session.commit()
 
 	def sort(self):
 		print "Caching Manufacturers..."
+		self.session.begin(subtransactions=True)
 		manufacturers = dict()
 		query = self.session.query(ManufacturerModel)
 		for manufacturer in query:
@@ -187,31 +163,21 @@ class ProductTask(BaseTask):
 		print "Sorting List..."
 		sorttable.sort(key=sortkey)
 
-		ts = ttystatus.TerminalStatus(period=0.5)
-		ts.add(ttystatus.Literal('Sorting Products '))
-		ts.add(ttystatus.Literal(' Elapsed: '))
-		ts.add(ttystatus.ElapsedTime())
-		ts.add(ttystatus.Literal(' Remaining: '))
-		ts.add(ttystatus.RemainingTime('done', 'total'))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
-		ts.add(ttystatus.Literal(' '))
-		ts.add(ttystatus.ProgressBar('done', 'total'))
-		ts['total'] = len(sorttable)
-		ts['done'] = 0
+		ts = term_sort('Products Sort', len(sorttable))
 
 		for x in xrange(len(sorttable)):
 			(product_id, a, b) = sorttable[x]
 			query = self.session.query(ProductModel)
 			query = query.filter(ProductModel.id == product_id)
 			product = query.one()
-			self.session.begin()
 			product.sort = x
-			self.session.commit()
 			ts['done'] += 1
+		self.session.commit()
+		ts.finish()
 
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""
+		self.session.begin(subtransactions=True)
 		data = self.get_supplier_catalog_item(product)
 		
 		#product.set_debug(True)
@@ -242,10 +208,12 @@ class ProductTask(BaseTask):
 		else:
 			product.supplier_catalog_item_id = None
 			product.supplier_special = False
+		self.session.commit()
 
 
 	def update_inventory_items(self, product):
 		"""Update Inventory Items"""
+		self.session.begin(subtransactions=True)
 		query = self.session.query(InventoryItemModel)
 		query = query.filter(InventoryItemModel.product_id == product.id)
 		product.inventory_item_count = query.count()
@@ -256,10 +224,12 @@ class ProductTask(BaseTask):
 			quantity += inventory_item.quantity
 		
 		product.stock = quantity
+		self.session.commit()
 
 
 	def update_customer_order_items(self, product):
 		"""Update Customer Order Items"""
+		self.session.begin(subtransactions=True)
 		query = self.session.query(CustomerOrderItemModel)
 		query = query.filter(CustomerOrderItemModel.product_id == product.id)
 		product.customer_order_item_count = query.count()
@@ -268,6 +238,7 @@ class ProductTask(BaseTask):
 			query2 = self.session.query(CustomerShipmentItemModel)
 			query2 = query.filter(CustomerShipmentItemModel.customer_order_item_id == customer_order_item.id)
 			product.customer_shipment_item_count = query2.count()
+		self.session.commit()
 
 
 	def get_supplier_catalog_item(self, product):

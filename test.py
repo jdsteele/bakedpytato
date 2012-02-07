@@ -36,7 +36,7 @@ import pstats
 #cProfile.run( 'task.update()' , 'fooprof')
 
 task = ProductTask()
-#task.load_all()
+#cProfile.run('task.load_all()', 'fooprof')
 cProfile.run('task.update_all()', 'fooprof')
 #task.sort()
 
