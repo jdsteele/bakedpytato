@@ -78,35 +78,35 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 		data = dict()
 
-		if 'VPARTNO' in fields:
+		if 'VPARTNO' in fields and fields['VPARTNO'] is not None:
 			m = re.match(r'^(...)(.+)$', fields['VPARTNO'])
 			data['manufacturer_identifier'] = m.group(1)
 			data['product_identifier'] = m.group(2)
 
-		if 'DESCRIP' in fields:
+		if 'DESCRIP' in fields and fields['DESCRIP'] is not None:
 			data['name'] = fields['DESCRIP']
 			#for removable in self.removables:
 			#	data['name'] = re.sub(removable, ' ', data['name'])
 
-		if 'SCALE' in fields:
+		if 'SCALE' in fields and fields['SCALE'] is not None:
 			data['scale_identifier'] = fields['SCALE']
 
-		if 'CATEGORY' in fields:
+		if 'CATEGORY' in fields and fields['CATEGORY'] is not None:
 			data['category_identifier'] = fields['CATEGORY']
 
-		if 'INSTOCK' in fields:
+		if 'INSTOCK' in fields and fields['INSTOCK'] is not None:
 			if fields['INSTOCK'] in ['YES', 'NO']:
 				data['stock'] = (fields['INSTOCK'] == 'YES')
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['INSTOCK'])
 
-		if 'ENDOFLIFE' in fields:
+		if 'ENDOFLIFE' in fields and fields['ENDOFLIFE'] is not None:
 			if fields['ENDOFLIFE'] in ['DISC']:
 				data['phased_out'] = (fields['ENDOFLIFE'] == 'DISC')
 			else:
 				logger.error("Field ENDOFLIFE has unexpected value %s", fields['ENDOFLIFE'])
 
-		if 'PRICE' in fields:
+		if 'PRICE' in fields and fields['PRICE'] is not None:
 			data['retail'] = Decimal(fields['PRICE'])
 			if data['retail'] < Decimal(0):
 				data['retail'] = Decimal(0)
@@ -114,7 +114,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 			data['retail'] = Decimal(0)
 
 		
-		if 'COST' in fields:
+		if 'COST' in fields and fields['COST'] is not None:
 			cost = Decimal(fields['COST'])
 
 			if cost < Decimal(0):
