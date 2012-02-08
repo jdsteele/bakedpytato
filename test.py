@@ -26,18 +26,18 @@ import pstats
 #task1 = SupplierCatalogItemVersionTask()
 #cProfile.run( 'task1.load()' , 'fooprof')
 
-#task2 = SupplierCatalogItemFieldTask()
+task2 = SupplierCatalogItemFieldTask()
 
-#task2.update_all()
+task2.update_all()
 
 #task1.update_all()
 
 #task = SupplierCatalogItemTask()
 #cProfile.run( 'task.update()' , 'fooprof')
 
-task = ProductTask()
+#task = ProductTask()
 #cProfile.run('task.load_all()', 'fooprof')
-cProfile.run('task.update_all()', 'fooprof')
+#cProfile.run('task.update_all()', 'fooprof')
 #task.sort()
 
 #task = CatalogItemTask()
@@ -50,4 +50,4 @@ cProfile.run('task.update_all()', 'fooprof')
 #task.update_all()
 
 p = pstats.Stats('fooprof')
-p.sort_stats('cumulative').print_stats(40)
+p.sort_stats('time').print_stats(40)

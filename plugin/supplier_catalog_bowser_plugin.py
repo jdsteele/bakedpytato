@@ -9,15 +9,15 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 #Standard Library
 import csv
 import logging 
 import re
-from datetime import datetime
+from datetime import date, datetime
 #import uuid
-#from decimal import *
+from decimal import *
 
 #Extended Library
 #from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -39,6 +39,20 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 	
 	column_names11 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Description2', 'Retail', 'Discount']
 	column_names10 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Retail', 'Discount']
+	
+	removables = [
+		'Arbour ',
+		'Atlas',
+		'English ',
+		'Englishs ', 
+		'English\'s ',
+		'Cal Scale ',
+		'Cary ',
+		'Selley ',
+		'Stewart ',
+		'Walthers'
+	]
+
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -87,3 +101,78 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 
 		logger.warning("Failed to convert issue_date for %s", file_import.name)
 		return file_import.effective
+
+	def update_fields(self, fields):
+		"""Update Field"""
+
+		if fields is None:
+			logger.warning("Fields is empty")
+			return None
+
+		data = dict()
+
+		if fields['Manufacturer'] is not None:
+			data['manufacturer_identifier'] = fields['Manufacturer']
+			
+		if fields['Item'] is not None:
+			data['product_identifier'] = fields['Item']
+			
+		if fields['Description1'] is not None:
+			data['name'] = fields['Description1']
+			for removable in self.removables:
+				data['name'] = re.sub(removable, ' ', data['name'])
+
+		if fields['Category1'] is not None:
+			data['category_identifier'] = fields['Category1']
+		elif fields['Category2'] is not None:
+			data['category_identifier'] = fields['Category2']
+		elif fields['Category3'] is not None:
+			data['category_identifier'] = fields['Category3']
+
+
+		if fields['Stock'] is not None:
+			data['stock'] = (int(fields['Stock']) > 0)
+			data['advanced'] = (int(fields['Stock']) == -10000)
+		
+			if data['advanced'] == True:
+				m = re.match(r'(\d{1,2})\/(\d{1,2})\/(\d{4})', fields['Description2'])
+				if m:
+					
+					month = int(m.group(1))
+					day = int(m.group(2))
+					year = int(m.group(3))
+					
+					if year > 2100:
+						data['availability_indefinite'] = True
+					else:
+						data['available'] = date(year, month, day)
+						data['availability_indefinite'] = False
+				else:
+					data['availability_indefinite'] = True
+
+		if fields['Retail'] is not None:
+			m = re.match(r'\$(.*)', fields['Retail'])
+			if m:
+				data['retail'] = m.group(1)
+				data['retail'] = re.sub(r'\,', '', data['retail'])
+				data['retail'] = data['retail'].strip()
+				data['retail'] = Decimal(data['retail'])
+			else:
+				data['retail'] = Decimal(0)
+
+			if data['retail'] > Decimal(9000):
+				##Bowser uses '9999.00' and '9999.99' to indicate 'TBA'
+				data['retail'] = Decimal(0)
+				data['to_be_announced'] = True
+
+			if data['retail'] < Decimal(0):
+				data['retail'] = Decimal(0)
+		
+			#data['cost'] = fields['Price1']
+
+			if fields['Discount'] is not None:
+				discount = Decimal(fields['Discount'])
+				ratio = (Decimal(100) - discount) / Decimal(100)
+				data['cost'] = data['retail'] * ratio
+
+		return data

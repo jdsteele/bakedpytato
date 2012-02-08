@@ -16,6 +16,7 @@ import csv
 import logging 
 import re
 from datetime import datetime
+from decimal import *
 
 #Extended Library
 
@@ -29,6 +30,74 @@ logger = logging.getLogger(__name__)
 class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 	
 	column_names = ['SKU', 'Name', 'Retail']
+	
+	#Effective 2011-03-22
+	discount = 44.3;
+	discount_by_manufacturer = {
+		'ACU':44.3, 'ATL':44.3, 'ARI':30.9, 'BAC':48.5,
+		'BLM':44.3, 'BOW':40.0, 'BLI':31.9, 'BFS':40.2,
+		'CAB':38.1, 'CIR':44.3, 'MWI':44.3, 'FVM':44.3,
+		'GGT':34.5, 'GCR':40.0, 'IMX':48.5, 'KAD':44.3,
+		'KAT':44.3, 'MIE':40.2, 'MNT':38.1, 'MDP':48.5,
+		'MRC':44.3, 'NCE':40.2, 'PCO':44.3, 'PCM':31.9,
+		'RAP':44.3, 'RAT':38.1, 'SWH':44.3, 'TCS':39.2,
+		'WHT':41.0, 'WIL':38.1, 'AMB':44.3, 'AAC':44.3,
+		'CHO':44.3, 'DPM':38.1, 'EVG':44.3, 'EXL':53.6,
+		'FLO':48.5, 'HLB':44.3, 'K+S':44.3, 'KAL':44.3,
+		'KMT':38.1, 'LAB':44.3, 'MMZ':44.3, 'MID':44.3,
+		'MSE':38.1, 'PAC':48.5, 'PKS':44.3, 'PIN':44.3,
+		'PLS':44.3, 'RIX':44.3, 'ROB':50.5, 'SEX':44.3,
+		'SMA':44.3, 'SII':48.5, 'SQU':44.3, 'TAM':48.5,
+		'TNX':48.5, 'TES':48.5, 'XAC':50, 'XUR':44.3,
+		'WOO':44.3
+	}
+		
+	discount_by_sku = {
+		#Atlas Bulk Track	48.5
+		'ATL1001049':48.5,
+		'ATL1001067':48.5,
+		'ATL155':48.5,
+		'ATL24':48.5,
+		'ATL2513':48.5,
+		'ATL2515':48.5,
+		'ATL2516':48.5,
+		'ATL2517':48.5,
+		'ATL2534':48.5,
+		'ATL410':48.5,
+		'ATL411':48.5,
+		'ATL412':48.5,
+		'ATL90150':48.5,
+		'ATL90151':48.5,
+		'ATL90152':48.5,
+		'ATL90153':48.5,
+		
+		#Atlas O	30.9
+		#Atlas Trainman	30.9
+		#BLMA Brass	26.3
+		#BLI Brass, Hybrid	21
+		#BLI Blueline	49.5
+		#BLI Paragon 2	41
+		#Circuitron Tortoise Machines 41.6
+		'CIR6000':41.6,
+		'CIR6006':41.6,
+		'CIR6012':41.6,
+		#Kadee '#' noted items	25
+		#Kato Special Items	23.7
+		#Model Power Tunnels	40
+		#Precision Craft Models Brass	21
+	}
+	
+	skipable = [
+		'ATL0531', 
+		'CASH', 
+		'DASB', 
+		'DASR', 
+		'DROP SHIP',
+		'FRGT',
+		'FRGTADJ',
+		'LIONEL COOP'
+	]
+	
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -63,3 +132,49 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 
 		logger.warning("Failed to convert issue_date for %s", file_import.name)
 		return file_import.effective
+
+	def update_fields(self, fields):
+		"""Update Field"""
+
+		if fields is None:
+			logger.warning("Fields is empty")
+			return None
+
+		data = dict()
+		
+		if 'SKU' in fields:
+			if fields['SKU'] in self.skipable:
+				return None
+			m = re.match(r'^(...)(.*)$', fields['SKU'])
+			if m:
+				data['manufacturer_identifier'] = m.group(1)
+				data['product_identifier'] = m.group(2)
+
+		data['stock'] = True
+		
+		if 'Name' in fields:
+			data['name'] = fields['Name']
+			
+		if 'Retail' in fields:
+			data['retail'] = Decimal(fields['Retail'])
+			if fields['SKU'] in self.discount_by_sku:
+				discount = self.discount_by_sku[fields['SKU']]
+				
+				
+			##FIXME This shouldn't be hardcoded
+			elif data['manufacturer_identifier'] == 'KAD':
+				m = re.match(r'^\#', data['name'])
+				if m:
+					discount = 25
+				else:
+					discount = 44.3
+			elif data['manufacturer_identifier'] in self.discount_by_manufacturer:
+				discount = self.discount_by_manufacturer[data['manufacturer_identifier']]
+
+			else:
+				discount = self.discount
+
+			ratio = (Decimal(100) - Decimal(discount)) / Decimal(100)
+			data['cost'] = data['retail'] * ratio
+
+		return data

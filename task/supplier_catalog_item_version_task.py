@@ -14,7 +14,6 @@
 
 #Standard Library
 import hashlib
-import json
 import logging 
 import re
 
@@ -85,27 +84,16 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		for row in plug.get_items(supplier_catalog):
 			self.ts['sub_done'] += 1
 			row_number += 1
-			for key, value in row.iteritems():
-				#value = re.sub(r'\s\s+', ' ', value)
-				#value = value.strip()
-				if value == "":
-					value = None
-				row[key] = value
-				
-			try:
-				j = json.dumps(row, sort_keys=True, separators=(',', ':'))
-				#print j
-			except UnicodeDecodeError:
-				logger.error("UnicodeDecodeError during conversion to json:\n\t%s", row)
-				continue
-			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, j)
+			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, row)
 			self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
 		self.session.commit()
 
-	def load_supplier_catalog_item_field(self, supplier_catalog, j):
+	def load_supplier_catalog_item_field(self, supplier_catalog, row):
+		j = SupplierCatalogItemField.encode_json(row)
+
 		self.session.begin(subtransactions=True)
-		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		checksum = hashlib.sha1(j).hexdigest()
+		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		
 		query = self.session.query(SupplierCatalogItemFieldModel)
 		query = query.filter(SupplierCatalogItemFieldModel.checksum == checksum)

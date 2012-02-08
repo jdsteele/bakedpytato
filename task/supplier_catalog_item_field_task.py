@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
 #Standard Library
@@ -34,15 +34,38 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	
+	field_names = [
+		'advanced',
+		'availability_indefinite',
+		'available',
+		'category_identifier',
+		'cost',
+		'manufacturer_identifier', 
+		'name', 
+		'phased_out',
+		'product_identifier',
+		'retail', 
+		'scale_identifier',
+		'special_cost',
+		'stock',
+		'to_be_announced'
+	]
+	
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
+		self.session.begin(subtransactions=True)
 		self.plugins = self.load_plugins()
 		query = self.session.query(SupplierCatalogItemFieldModel)
 		self.ts = self.term_stat('SupplierCatalogItemField Update All', query.count())
-		for supplier_catalog_item_field in query.yield_per(100):
+		for supplier_catalog_item_field in query.yield_per(1000):
+			#self.session.begin(subtransactions=True)
 			self.update_one(supplier_catalog_item_field)
+			if self.ts['done'] % 1000 == 0:
+				self.session.flush()
+			#self.session.commit()
 			self.ts['done'] += 1
+		self.session.commit()
 		self.ts.finish()
 		logger.debug("End load_all()")
 			
@@ -51,3 +74,25 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			logger.warning("Plugin %s Not Found", supplier_catalog_item_field.supplier_catalog_filter_id)
 			return None
 		plug = self.plugins[supplier_catalog_item_field.supplier_catalog_filter_id]
+		fields = supplier_catalog_item_field.get_fields()
+		data = plug.update_fields(fields)
+		if data is not None:
+			#print "Fields:", fields
+			#print "Data:", data
+			for field_name in self.field_names:
+				if field_name in data:
+					field = data[field_name]
+					if isinstance(field, basestring):
+						field = field.strip()
+						
+					if field_name == 'product_identifier':
+						field = field.lstrip('0')
+						
+					setattr(supplier_catalog_item_field, field_name, field)
+				else:
+					setattr(supplier_catalog_item_field, field_name, None)
+		else:
+			#logger.warning("Plugin returned empty data %s %s", supplier_catalog_item_field.supplier_catalog_filter_id, fields)
+			for field_name in self.field_names:
+				setattr(supplier_catalog_item_field, field_name, None)
+

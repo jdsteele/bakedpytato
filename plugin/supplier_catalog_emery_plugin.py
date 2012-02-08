@@ -9,13 +9,14 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 #Standard Library
 import csv
 import logging 
 import re
 from datetime import datetime
+from decimal import *
 
 #Extended Library
 
@@ -65,3 +66,65 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 		logger.warning("Failed to convert issue_date for %s", file_import.name)
 		return file_import.effective
+
+	def update_fields(self, fields):
+		"""Update Field"""
+
+		#'VPARTNO', 'DESCRIP', 'SCALE', 'CATEGORY', 'PRICE', 'COST', 'INSTOCK', 'ENDOFLIFE', 'ONSALE', 
+
+		if fields is None:
+			logger.warning("Fields is empty")
+			return None
+
+		data = dict()
+
+		if fields['VPARTNO'] is not None:
+			m = re.match(r'^(...)(.+)$', fields['VPARTNO'])
+			data['manufacturer_identifier'] = m.group(1)
+			data['product_identifier'] = m.group(2)
+
+		if fields['DESCRIP'] is not None:
+			data['name'] = fields['DESCRIP']
+			#for removable in self.removables:
+			#	data['name'] = re.sub(removable, ' ', data['name'])
+
+		if fields['SCALE'] is not None:
+			data['scale_identifier'] = fields['SCALE']
+
+		if fields['CATEGORY'] is not None:
+			data['category_identifier'] = fields['CATEGORY']
+
+		if fields['INSTOCK'] is not None:
+			if fields['INSTOCK'] in ['YES', 'NO']:
+				data['stock'] = (fields['INSTOCK'] == 'YES')
+			else:
+				logger.error("Field INSTOCK has unexpected value %s", fields['INSTOCK'])
+
+		if fields['ENDOFLIFE'] is not None:
+			if fields['ENDOFLIFE'] in ['DISC']:
+				data['phased_out'] = (fields['ENDOFLIFE'] == 'DISC')
+			else:
+				logger.error("Field ENDOFLIFE has unexpected value %s", fields['ENDOFLIFE'])
+
+		if fields['PRICE'] is not None:
+			data['retail'] = Decimal(fields['PRICE'])
+			if data['retail'] < Decimal(0):
+				data['retail'] = Decimal(0)
+		else:
+			data['retail'] = Decimal(0)
+
+		
+		if fields['COST'] is not None:
+			cost = Decimal(fields['COST'])
+
+			if cost < Decimal(0):
+				cost = Decimal(0)
+
+			if 'special' in data and data['special'] == True:
+				data['special_cost'] = cost
+			else:
+				data['cost'] = cost
+		else:
+			cost = Decimal(0)
+
+		return data

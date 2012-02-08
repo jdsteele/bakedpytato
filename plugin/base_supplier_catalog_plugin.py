@@ -40,7 +40,7 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 		"""SubClass Me"""
 		return []
 
-	def update_field(self, supplier_catalog_item_field):
+	def update_fields(self, supplier_catalog_item_field):
 		"""Subclass Me"""
 		return
 
