@@ -78,35 +78,35 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 		data = dict()
 
-		if fields['VPARTNO'] is not None:
+		if 'VPARTNO' in fields:
 			m = re.match(r'^(...)(.+)$', fields['VPARTNO'])
 			data['manufacturer_identifier'] = m.group(1)
 			data['product_identifier'] = m.group(2)
 
-		if fields['DESCRIP'] is not None:
+		if 'DESCRIP' in fields:
 			data['name'] = fields['DESCRIP']
 			#for removable in self.removables:
 			#	data['name'] = re.sub(removable, ' ', data['name'])
 
-		if fields['SCALE'] is not None:
+		if 'SCALE' in fields:
 			data['scale_identifier'] = fields['SCALE']
 
-		if fields['CATEGORY'] is not None:
+		if 'CATEGORY' in fields:
 			data['category_identifier'] = fields['CATEGORY']
 
-		if fields['INSTOCK'] is not None:
+		if 'INSTOCK' in fields:
 			if fields['INSTOCK'] in ['YES', 'NO']:
 				data['stock'] = (fields['INSTOCK'] == 'YES')
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['INSTOCK'])
 
-		if fields['ENDOFLIFE'] is not None:
+		if 'ENDOFLIFE' in fields:
 			if fields['ENDOFLIFE'] in ['DISC']:
 				data['phased_out'] = (fields['ENDOFLIFE'] == 'DISC')
 			else:
 				logger.error("Field ENDOFLIFE has unexpected value %s", fields['ENDOFLIFE'])
 
-		if fields['PRICE'] is not None:
+		if 'PRICE' in fields:
 			data['retail'] = Decimal(fields['PRICE'])
 			if data['retail'] < Decimal(0):
 				data['retail'] = Decimal(0)
@@ -114,7 +114,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 			data['retail'] = Decimal(0)
 
 		
-		if fields['COST'] is not None:
+		if 'COST' in fields:
 			cost = Decimal(fields['COST'])
 
 			if cost < Decimal(0):
