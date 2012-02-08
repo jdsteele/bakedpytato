@@ -18,24 +18,18 @@ from task import *
 
 while(True):
 
-	task = SupplierCatalogTask()
-	task.load()
-	task.update_all()
+	SupplierCatalogTask().load()
+	SupplierCatalogTask().update_all()
 
-	task = SupplierCatalogItemVersionTask()
-	task.load()
-	##task.update_all()
+	SupplierCatalogItemVersionTask().load()
 
-	##task = SupplierCatalogItemFieldTask()
-	##task.load_all()
-	##task.update_all()
+	SupplierCatalogItemFieldTask().update_all()
 
+	#SupplierCatalogItemVersionTask().update_all()
 
-	task = SupplierCatalogItemTask()
-	##task.load_all()
-	task.update()
-
-	task = ProductTask()
-	task.load_all()
-	task.update_all()
-	task.sort()
+	#SupplierCatalogItemTask().load_all()
+	SupplierCatalogItemTask().update()
+	
+	ProductTask().load_all()
+	ProductTask().update_all()
+	ProductTask().sort()
