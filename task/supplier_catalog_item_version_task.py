@@ -89,7 +89,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		self.session.commit()
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, row):
-		j = SupplierCatalogItemField.encode_json(row)
+		j = SupplierCatalogItemFieldModel.encode_json(row)
 
 		self.session.begin(subtransactions=True)
 		checksum = hashlib.sha1(j).hexdigest()

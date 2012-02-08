@@ -55,6 +55,7 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 		
 	@classmethod
 	def encode_json(cls, data):
+		row = dict()
 		for key, value in data.iteritems():
 			#value = re.sub(r'\s\s+', ' ', value)
 			#value = value.strip()
