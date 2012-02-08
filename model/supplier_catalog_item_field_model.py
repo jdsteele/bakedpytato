@@ -47,14 +47,19 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 	supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
 
 	def get_fields(self):
+		if self.fields is None:
+			return None
 		return self.decode_json(self.fields)
-	
+		
 	def set_fields(self, row):
 		self.fields = self.encode_json(row)
 		return self
 		
 	@classmethod
 	def encode_json(cls, data):
+		if j is None:
+			logger.error("Attempt to convert None to json ignored")
+			return None
 		row = dict()
 		for key, value in data.iteritems():
 			#value = re.sub(r'\s\s+', ' ', value)
@@ -72,8 +77,13 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 
 	@classmethod
 	def decode_json(cls, j):
+		if j is None:
+			logger.error("Attempt to convert None as json ignored")
+			return None
 		try:
 			return json.loads(j)
 		except UnicodeDecodeError:
 			logger.error("UnicodeDecodeError during conversion from json:\n\t%s", j)
+		except ValueError:
+			logger.error("ValueError during conversion from json:\n\t%s", j)
 		return None
