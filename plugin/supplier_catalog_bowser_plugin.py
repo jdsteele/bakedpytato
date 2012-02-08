@@ -111,26 +111,26 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 
 		data = dict()
 
-		if fields['Manufacturer'] is not None:
+		if 'Manufacturer' in fields:
 			data['manufacturer_identifier'] = fields['Manufacturer']
 			
-		if fields['Item'] is not None:
+		if 'Item' in fields:
 			data['product_identifier'] = fields['Item']
 			
-		if fields['Description1'] is not None:
+		if 'Description1' in fields:
 			data['name'] = fields['Description1']
 			for removable in self.removables:
 				data['name'] = re.sub(removable, ' ', data['name'])
 
-		if fields['Category1'] is not None:
+		if 'Category1' in fields and fields['Category1'] is not None:
 			data['category_identifier'] = fields['Category1']
-		elif fields['Category2'] is not None:
+		elif 'Category2' in fields and fields['Category2'] is not None:
 			data['category_identifier'] = fields['Category2']
-		elif fields['Category3'] is not None:
+		elif 'Category3' in fields and fields['Category3'] is not None:
 			data['category_identifier'] = fields['Category3']
 
 
-		if fields['Stock'] is not None:
+		if 'Stock' in fields:
 			data['stock'] = (int(fields['Stock']) > 0)
 			data['advanced'] = (int(fields['Stock']) == -10000)
 		
@@ -150,7 +150,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 				else:
 					data['availability_indefinite'] = True
 
-		if fields['Retail'] is not None:
+		if 'Retail' in fields:
 			m = re.match(r'\$(.*)', fields['Retail'])
 			if m:
 				data['retail'] = m.group(1)
@@ -170,7 +170,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 		
 			#data['cost'] = fields['Price1']
 
-			if fields['Discount'] is not None:
+			if 'Discount' in fields:
 				discount = Decimal(fields['Discount'])
 				ratio = (Decimal(100) - discount) / Decimal(100)
 				data['cost'] = data['retail'] * ratio
