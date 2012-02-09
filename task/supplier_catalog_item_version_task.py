@@ -32,50 +32,55 @@ from task.base_supplier_catalog_task import BaseSupplierCatalogTask
 
 logger = logging.getLogger(__name__)
 
+#TODO: delete SupplierCatalogItemVersions for empty rows, 
+#and rows past last row found in FileImport
+#
+#vacuum SupplierCatalogItems for non-existant Supplier Catalogs
+#
+#load modified SupplierCatalogs
+
 class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 	
 	def load(self):
 		"""Load"""
 		logger.debug("Begin load()")
-		self.plugins = self.load_plugins()
-		query = self.session.query(SupplierCatalogModel)
-		query = query.filter(SupplierCatalogModel.item_versions_loaded == False)
-		query = query.order_by(desc(SupplierCatalogModel.issue_date))
-		if query.count() > 0:
-			supplier_catalog = query.first()
-			self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
-			logger.info("Loading ItemVersions for SupplierCatalog %s", supplier_catalog.id)
-			self.load_from_supplier_catalog(supplier_catalog)
-			self.session.begin(subtransactions=True)
-			supplier_catalog.item_versions_loaded = True
-			self.session.commit()
-		else:
-			logger.info("No Unloaded SupplierCatalogs Found")
-			## TODO: re-load a randomly picked catalog here?
+		self.load_all(limit=10, item_versions_loaded=False)
+		## TODO: re-load a randomly picked catalog here?
 		logger.debug("End load()")
 	
-	def load_all(self):
+	def load_all(self, limit=None, item_versions_loaded=None):
 		"""Load All"""
-		logger.debug("Begin load_all()")
+		logger.debug("Begin load_all(limit=%s, item_versions_loaded=%s)", limit, item_versions_loaded)
 		self.plugins = self.load_plugins()
 		query = self.session.query(SupplierCatalogModel)
-		self.ts = self.term_stat('SupplierCatalogItemVersion Load All', query.count())
+		query = query.filter(SupplierCatalogModel.supplier_id != None)
+		query = query.order_by(desc(SupplierCatalogModel.issue_date))
+
+		if item_versions_loaded is not None:
+			query = query.filter(SupplierCatalogModel.item_versions_loaded == False)
+
+		if limit is not None:
+			query = query.limit(limit)
+
+		self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
 		for supplier_catalog in query.yield_per(10):
+			self.session.begin(subtransactions=True)
 			self.load_one(supplier_catalog)
+			supplier_catalog.item_versions_loaded = True
+			self.session.commit()
 			self.ts['done'] += 1
 		self.ts.finish()
 		logger.debug("End load_all()")
 		
 	def load_one(self, supplier_catalog):
-		self.sesion.begin(subtransactions=True)
+		self.session.begin(subtransactions=True)
 		self.load_from_supplier_catalog(supplier_catalog)
-		self.sesion.commit()
+		self.session.commit()
 			
 	def load_from_supplier_catalog(self, supplier_catalog):
 		self.session.begin(subtransactions=True)
-
 		if not supplier_catalog.supplier_catalog_filter_id in self.plugins:
-			logger.warning("Plugin %s Not Found", supplier_catalog.supplier_catalog_filter_id)
+			logger.warning("Plugin %s Not Found For SupplierCatalog %s", supplier_catalog.supplier_catalog_filter_id, supplier_catalog.id)
 			return None
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		self.ts['sub_done'] = 0
