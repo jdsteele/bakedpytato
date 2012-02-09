@@ -201,7 +201,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item_version = query.one()
 		except NoResultFound:
 			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
-			return none
+			return None
 		data = dict()
 		for field_name in self.field_names.iterkeys():
 			data[field_name] = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
