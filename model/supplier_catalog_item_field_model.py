@@ -57,7 +57,7 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 		
 	@classmethod
 	def encode_json(cls, data):
-		if j is None:
+		if data is None:
 			logger.error("Attempt to convert None to json")
 			return None
 		row = dict()

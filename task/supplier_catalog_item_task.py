@@ -142,7 +142,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (product_identifier, ) in product_identifiers:
 			self.ts['product'] = product_identifier
 			data = self.coalesce(plug, supplier_id, manufacturer_identifier, product_identifier)
-			self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
+			if data is not None:
+				self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
 			self.ts['product_done'] += 1
 
 	def coalesce(self, plug, supplier_id, manufacturer_identifier, product_identifier):
@@ -176,7 +177,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
 		query = query.order_by(desc(VersionModel.effective))
 		query = query.limit(1)
-		supplier_catalog_item_version = query.one()
+		try:
+			supplier_catalog_item_version = query.one()
+		except NoResultFound:
+			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			return none
 		data = dict()
 		for field_name in self.field_names.iterkeys():
 			data[field_name] = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
@@ -185,6 +190,56 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def coalesce_opaque_ghost(self, VersionModel, s, plug):
 		data = self.coalesce_opaque_noghost(VersionModel, s)
+		if data is None: 
+			return None
+		
+		if data['supplier_catalog_id'] != self.supplier_catalog_id:
+			if plug.ghost_stock():
+				data['stock'] = False
+			if plug.ghost_phased_out():
+				data['phased_out'] = False
+			if plug.ghost_advanced():
+				data['advanced'] = False
+		return data
+
+
+	def coalesce_translucent_noghost(self, VersionModel, s):
+		query = self.session.query(VersionModel)
+		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
+		query = query.order_by(desc(VersionModel.effective))
+
+		count = query.count()
+
+		if count == 0:
+			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			return none
+
+		data = dict()
+		first = True
+		done = 0
+		for supplier_catalog_item_version in query.all():
+			done += 1
+			if first:
+				data['supplier_catalog_id'] = supplier_catalog_item_version.supplier_catalog_id
+			complete = True
+			for field_name in self.field_names.iterkeys():
+				field = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
+				if data[field_name] is None:
+					if field is None:
+						complete = False
+					else:
+						data[field_name] = field
+			if complete:
+				break
+		
+		logger.info("Complete SupplierCatalogItem was found in %i of %i Versions", done, count)
+				
+		return data
+
+	def coalesce_translucent_ghost(self, VersionModel, s, plug):
+		data = self.coalesce_translucent_noghost(VersionModel, s)
+		if data is None: 
+			return None
 		
 		if data['supplier_catalog_id'] != self.supplier_catalog_id:
 			if plug.ghost_stock():
@@ -197,7 +252,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 			
 	def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
-		
 		query = self.session.query(SupplierCatalogItemModel)
 		query = query.filter(SupplierCatalogItemModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier == manufacturer_identifier)
@@ -207,25 +261,19 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item = query.one()
 		except NoResultFound:
 			supplier_catalog_item = SupplierCatalogItemModel()
-			supplier_catalog_item.supplier_id == supplier_id
-			supplier_catalog_item.manufacturer_identifier == manufacturer_identifier
-			supplier_catalog_item.product_identifier == product_identifier
-			#self.session.add(supplier_catalog_item)
+			supplier_catalog_item.supplier_id = supplier_id
+			supplier_catalog_item.manufacturer_identifier = manufacturer_identifier
+			supplier_catalog_item.product_identifier = product_identifier
+			self.session.add(supplier_catalog_item)
 		
 		for (field_name, item_name) in self.field_names.iteritems():
-			
-			self.compare(
-				field_name,
-				data[field_name],
-				getattr(supplier_catalog_item, item_name)
-
-			#setattr(supplier_catalog_item, item_name, data[field_name])
-
-
-			)
-			
-		#print "Product", supplier_id, manufacturer_identifier, product_identifier
-		#print data
+			#self.compare(
+				#field_name,
+				#data[field_name],
+				#getattr(supplier_catalog_item, item_name)
+			#)
+			setattr(supplier_catalog_item, item_name, data[field_name])
+		self.session.flush()
 
 	def compare(self, name, left, right):
 		if left != right:
