@@ -48,13 +48,17 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		## TODO: re-load a randomly picked catalog here?
 		logger.debug("End load()")
 	
-	def load_all(self, limit=None, item_versions_loaded=None):
+	def load_all(self, limit=None, item_versions_loaded=None, supplier_id=None):
 		"""Load All"""
 		logger.debug("Begin load_all(limit=%s, item_versions_loaded=%s)", limit, item_versions_loaded)
 		self.plugins = self.load_plugins()
 		query = self.session.query(SupplierCatalogModel)
-		query = query.filter(SupplierCatalogModel.supplier_id != None)
 		query = query.order_by(desc(SupplierCatalogModel.issue_date))
+
+		if supplier_id is not None:
+			query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
+		else:
+			query = query.filter(SupplierCatalogModel.supplier_id != None)
 
 		if item_versions_loaded is not None:
 			query = query.filter(SupplierCatalogModel.item_versions_loaded == False)
