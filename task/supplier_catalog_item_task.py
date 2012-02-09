@@ -61,7 +61,14 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		#'to_be_announced':'to_be_announced'
 	}
 
-
+	defaults = {
+		'retail': Decimal(0),
+		'cost': Decimal(0),
+		'special_cost': Decimal(0),
+		'stock': False,
+		'phased_out': False,
+		'advanced': False
+	}
 
 	def load(self):
 		"""Load"""
@@ -102,9 +109,12 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_id = plug.supplier_id()
 			
 			supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
-			self.supplier_catalog_id = supplier_catalog.id
+			if supplier_catalog is not None:
+				self.supplier_catalog_id = supplier_catalog.id
 			
-			self.load_supplier(plug, supplier_id)
+				self.load_supplier(plug, supplier_id)
+			else:
+				logger.error("No Latest SupplierCatalog Found for Supplier %s", supplier_id)
 			self.ts['supplier_done'] += 1
 		self.session.commit()
 
@@ -161,16 +171,26 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (supplier_catalog_item_field_id, ) in query.all():
 			s.add(supplier_catalog_item_field_id)
 
+		
+
 		if plug.opaque() is True:
 			if plug.ghost() is True:
-				return self.coalesce_opaque_ghost(VersionModel, s, plug)
+				data = self.coalesce_opaque_ghost(VersionModel, s, plug)
 			else:
-				return self.coalesce_opaque_noghost(VersionModel, s)
+				data = self.coalesce_opaque_noghost(VersionModel, s)
 		else:
 			if plug.ghost() is True:
-				return self.coalesce_translucent_ghost(VersionModel, s)
+				data = self.coalesce_translucent_ghost(VersionModel, s)
 			else:
-				return self.coalesce_translucent_noghost(VersionModel, s)
+				data = self.coalesce_translucent_noghost(VersionModel, s)
+		
+		if data is None:
+			return None
+		
+		for (key, value) in self.defaults.iteritems():
+			if data[key] is None:
+				data[key] = value
+		return data
 
 	def coalesce_opaque_noghost(self, VersionModel, s):
 		query = self.session.query(VersionModel)

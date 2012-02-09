@@ -27,7 +27,7 @@ while(True):
 
 	#SupplierCatalogItemVersionTask().update_all()
 
-	#SupplierCatalogItemTask().load_all()
+	SupplierCatalogItemTask().load()
 	SupplierCatalogItemTask().update()
 	
 	ProductTask().load_all()
