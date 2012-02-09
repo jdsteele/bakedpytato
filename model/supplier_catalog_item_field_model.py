@@ -58,7 +58,7 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 	@classmethod
 	def encode_json(cls, data):
 		if j is None:
-			logger.error("Attempt to convert None to json ignored")
+			logger.error("Attempt to convert None to json")
 			return None
 		row = dict()
 		for key, value in data.iteritems():
@@ -78,7 +78,7 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 	@classmethod
 	def decode_json(cls, j):
 		if j is None:
-			logger.error("Attempt to convert None as json ignored")
+			logger.error("Attempt to convert None as json")
 			return None
 		try:
 			return json.loads(j)

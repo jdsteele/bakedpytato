@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
 from sqlalchemy import Boolean, Column, ForeignKey, String
@@ -26,3 +26,4 @@ class SupplierCatalogFilterModel(BaseModel, UUIDMixin):
 	ghost_phased_out = Column(Boolean, default=False)
 	ghost_advanced = Column(Boolean, default=True)
 	version_model = Column(String)
+	opaque = Column(Boolean, default=True)

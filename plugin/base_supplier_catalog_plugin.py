@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 #Standard Library
 import logging 
@@ -47,6 +47,26 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 	def supplier_id(self):
 		return self.supplier_catalog_filter.supplier_id
 
+	def ghost_stock(self):
+		return self.supplier_catalog_filter.ghost_stock
+
+	def ghost_phased_out(self):
+		return self.supplier_catalog_filter.ghost_phased_out
+
+	def ghost_advanced(self):
+		return self.supplier_catalog_filter.ghost_advanced
+		
+	def ghost(self):
+		return (
+			self.supplier_catalog_filter.ghost_stock |
+			self.supplier_catalog_filter.ghost_phased_out |
+			self.supplier_catalog_filter.ghost_advanced
+		)
+
+	def opaque(self):
+		return self.supplier_catalog_filter.opaque
+
+
 	def supplier_catalog_filter_id(self):
 		return self.supplier_catalog_filter.id
 
@@ -56,3 +76,5 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 	def issue_date(self, file_import):
 		"""Subclass Me"""
 		return file_import.effective
+
+		

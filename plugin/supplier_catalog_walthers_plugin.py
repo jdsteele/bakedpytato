@@ -17,6 +17,7 @@ import re
 import struct
 import tempfile
 from datetime import datetime
+from decimal import *
 
 #Extended Library
 
@@ -189,3 +190,52 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 
 		logger.warning("Failed to convert issue_date for %s", file_import.name)
 		return file_import.effective
+
+
+	def update_fields(self, fields):
+		"""Update Fields"""
+		data = dict()
+		
+		if MANUFACTURER in fields and fields[MANUFACTURER] is not None:
+			data['manufacturer_identifier'] = fields[MANUFACTURER]
+			
+		if PRODUCT in fields and fields[PRODUCT] is not None:
+			data['product_identifier'] = fields[PRODUCT]
+
+		if MASK_SCALE in fields and fields[MASK_SCALE] is not None:
+			data['scale_identifier'] = fields[MASK_SCALE]
+			
+		if MASK_CATEGORY in fields and fields[MASK_CATEGORY] is not None:
+			data['category_identifier'] = fields[MASK_CATEGORY]
+
+		if MASK_NAME in fields and fields[MASK_NAME] is not None:
+			data['name'] = fields[MASK_NAME]
+			
+		if MASK_PRICE_RETAIL in fields and fields[MASK_PRICE_RETAIL] is not None:
+			data['retail'] = Decimal(fields[MASK_PRICE_RETAIL]) / Decimal(100)
+
+		if MASK_PRICE_DEALER in fields and fields[MASK_PRICE_DEALER] is not None:
+			data['cost'] = Decimal(fields[MASK_PRICE_DEALER]) / Decimal(100)
+			
+		if MASK_AVAILABILITY in fields and fields[MASK_AVAILABILITY] is not None:
+			if fields[MASK_AVAILABILITY] > 90000000:
+				data['availability_indefinite'] = True
+				data['available'] = date(9999, 1, 1)
+			else:
+				m = re.match(r'^(....)(..)(..)$', str(fields[MASK_AVAILABILITY]))
+				if m:
+					data['availability_indefinite'] = False
+					data['available'] = date(m.group(1), m.group(2), m.group(3))
+					
+		if MASK_IS_PHASED_OUT in fields and fields[MASK_IS_PHASED_OUT] is not None:
+			if fields[MASK_IS_PHASED_OUT] in ['Y', 'N']:
+				data['phased_out'] = (fields[MASK_IS_PHASED_OUT] == 'Y')
+			else:
+				logger.error("Field MASK_IS_PHASED_OUT has unexpected value %s", fields[MASK_IS_PHASED_OUT])
+
+		if MASK_IS_IN_STOCK in fields and fields[MASK_IS_IN_STOCK] is not None:
+			if fields[MASK_IS_IN_STOCK] in ['Y', 'N']:
+				data['stock'] = (fields[MASK_IS_IN_STOCK] == 'Y')
+			else:
+				logger.error("Field MASK_IS_IN_STOCK has unexpected value %s", fields[MASK_IS_IN_STOCK])
+

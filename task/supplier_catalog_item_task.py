@@ -15,29 +15,223 @@
 #Standard Library
 import logging 
 import uuid
+import ttystatus
 from datetime import datetime
 from decimal import *
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy import asc, desc
+#from sqlalchemy.orm import in_
 
 #Application Library
 import cfg
+import model
 from model import CategoryConversionModel
 from model import ManufacturerModel, ManufacturerConversionModel
 from model import PriceControlModel
 from model import ProductModel, ProductConversionModel
 from model import ScaleModel, ScaleConversionModel
-from model import SupplierCatalogItemModel
+from model import SupplierCatalogModel, SupplierCatalogItemModel, SupplierCatalogItemFieldModel
+from model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
 
 #This Package
 import priceutil
-from task.base_task import BaseTask
 from task.setting_task import SettingTask
+from task.base_supplier_catalog_task import BaseSupplierCatalogTask
 
 logger = logging.getLogger(__name__)
 
-class SupplierCatalogItemTask(BaseTask):
+class SupplierCatalogItemTask(BaseSupplierCatalogTask):
+
+	field_names = {
+		'advanced':'advanced',
+		#'availability_indefinite':'availability_indefinite',
+		#'available':'available',
+		'category_identifier':'category_identifier',
+		'cost':'cost',
+		'manufacturer_identifier':'manufacturer_identifier', 
+		'name':'name',
+		'phased_out':'phased_out',
+		'product_identifier':'product_identifier',
+		'retail':'retail', 
+		'scale_identifier':'scale_identifier',
+		'special_cost':'special_cost',
+		'stock':'in_stock',
+		#'to_be_announced':'to_be_announced'
+	}
+
+
+
+	def load(self):
+		"""Load"""
+		logger.debug("Begin load()")
+		self.plugins = self.load_plugins()
+		self.load_all()
+		logger.debug("End load()")
+
+	def load_all(self):
+		
+		self.ts = ttystatus.TerminalStatus(period=1)
+		self.ts.add(ttystatus.Literal('SupplierCatalogItem Load  Elapsed: '))
+		self.ts.add(ttystatus.ElapsedTime())
+		self.ts.add(ttystatus.Literal('  Supplier: '))
+		self.ts.add(ttystatus.PercentDone('supplier_done', 'supplier_total', decimals=2))
+		self.ts.add(ttystatus.Literal('  Manufacturer: '))
+		self.ts.add(ttystatus.PercentDone('manufacturer_done', 'manufacturer_total', decimals=2))
+		self.ts.add(ttystatus.Literal('  Product: '))
+		self.ts.add(ttystatus.PercentDone('product_done', 'product_total', decimals=2))
+		self.ts.add(ttystatus.Literal('  '))
+		self.ts.add(ttystatus.String('manufacturer'))
+		self.ts.add(ttystatus.Literal('-'))
+		self.ts.add(ttystatus.String('product'))
+		
+		self.ts['supplier_total'] = 1
+		self.ts['supplier_done'] = 0
+		self.ts['manufacturer_total'] = 1
+		self.ts['manufacturer_done'] = 0
+		self.ts['product_total'] = 1
+		self.ts['product_done'] = 0
+
+		
+		self.session.begin(subtransactions=True)
+		self.ts['supplier_total'] = len(self.plugins)
+		self.ts['supplier_done'] = 0
+		
+		for plug in self.plugins.itervalues():
+			supplier_id = plug.supplier_id()
+			
+			supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
+			self.supplier_catalog_id = supplier_catalog.id
+			
+			self.load_supplier(plug, supplier_id)
+			self.ts['supplier_done'] += 1
+		self.session.commit()
+
+	def load_latest_supplier_catalog(self, supplier_id):
+		query = self.session.query(SupplierCatalogModel)
+		query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
+		return query.order_by(desc(SupplierCatalogModel.issue_date)).first()
+
+	def load_supplier(self, plug, supplier_id):
+		#print "Supplier", supplier_id
+		query = self.session.query(SupplierCatalogItemFieldModel.manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
+		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier != None)
+		manufacturer_identifiers = query.group_by(SupplierCatalogItemFieldModel.manufacturer_identifier).all()
+		self.ts['manufacturer_total'] = len(manufacturer_identifiers)
+		self.ts['manufacturer_done'] = 0
+		
+		
+		for (manufacturer_identifier, ) in manufacturer_identifiers:
+			self.ts['manufacturer'] = manufacturer_identifier
+			self.load_manufacturer(plug, supplier_id, manufacturer_identifier)
+			self.ts['manufacturer_done'] += 1
+
+	def load_manufacturer(self, plug, supplier_id, manufacturer_identifier):
+		#print "Manufacturer", supplier_id, manufacturer_identifier
+		query = self.session.query(SupplierCatalogItemFieldModel.product_identifier)
+		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
+		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemFieldModel.product_identifier != None)
+
+		product_identifiers = query.group_by(SupplierCatalogItemFieldModel.product_identifier).all()
+		self.ts['product_total'] = len(product_identifiers)
+		self.ts['product_done'] = 0
+		
+		for (product_identifier, ) in product_identifiers:
+			self.ts['product'] = product_identifier
+			data = self.coalesce(plug, supplier_id, manufacturer_identifier, product_identifier)
+			self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
+			self.ts['product_done'] += 1
+
+	def coalesce(self, plug, supplier_id, manufacturer_identifier, product_identifier):
+		model_name = plug.version_model()  + 'Model'
+		#print model_name
+		VersionModel = getattr(model, model_name)
+		#print VersionModel
+		
+		query = self.session.query(SupplierCatalogItemFieldModel.id)
+		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
+		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemFieldModel.product_identifier == product_identifier)
+		
+		s = set()
+		for (supplier_catalog_item_field_id, ) in query.all():
+			s.add(supplier_catalog_item_field_id)
+
+		if plug.opaque() is True:
+			if plug.ghost() is True:
+				return self.coalesce_opaque_ghost(VersionModel, s, plug)
+			else:
+				return self.coalesce_opaque_noghost(VersionModel, s)
+		else:
+			if plug.ghost() is True:
+				return self.coalesce_translucent_ghost(VersionModel, s)
+			else:
+				return self.coalesce_translucent_noghost(VersionModel, s)
+
+	def coalesce_opaque_noghost(self, VersionModel, s):
+		query = self.session.query(VersionModel)
+		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
+		query = query.order_by(desc(VersionModel.effective))
+		query = query.limit(1)
+		supplier_catalog_item_version = query.one()
+		data = dict()
+		for field_name in self.field_names.iterkeys():
+			data[field_name] = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
+		data['supplier_catalog_id'] = supplier_catalog_item_version.supplier_catalog_id
+		return data
+
+	def coalesce_opaque_ghost(self, VersionModel, s, plug):
+		data = self.coalesce_opaque_noghost(VersionModel, s)
+		
+		if data['supplier_catalog_id'] != self.supplier_catalog_id:
+			if plug.ghost_stock():
+				data['stock'] = False
+			if plug.ghost_phased_out():
+				data['phased_out'] = False
+			if plug.ghost_advanced():
+				data['advanced'] = False
+		return data
+
+			
+	def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
+		
+		query = self.session.query(SupplierCatalogItemModel)
+		query = query.filter(SupplierCatalogItemModel.supplier_id == supplier_id)
+		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier == manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemModel.product_identifier == product_identifier)
+		
+		try:
+			supplier_catalog_item = query.one()
+		except NoResultFound:
+			supplier_catalog_item = SupplierCatalogItemModel()
+			supplier_catalog_item.supplier_id == supplier_id
+			supplier_catalog_item.manufacturer_identifier == manufacturer_identifier
+			supplier_catalog_item.product_identifier == product_identifier
+			#self.session.add(supplier_catalog_item)
+		
+		for (field_name, item_name) in self.field_names.iteritems():
+			
+			self.compare(
+				field_name,
+				data[field_name],
+				getattr(supplier_catalog_item, item_name)
+
+			#setattr(supplier_catalog_item, item_name, data[field_name])
+
+
+			)
+			
+		#print "Product", supplier_id, manufacturer_identifier, product_identifier
+		#print data
+
+	def compare(self, name, left, right):
+		if left != right:
+			pass
+			print name, left, '!=', right
+
 
 	def update(self):
 		"""Update"""

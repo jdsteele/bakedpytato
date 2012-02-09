@@ -46,8 +46,14 @@ class SupplierCatalogItemVersionMixin(object):
 			ForeignKey('supplier_catalogs.id')
 		)
 
+	@declared_attr
+	def supplier_catalog_item_field(cls):
+		return relationship(
+			'SupplierCatalogItemFieldModel'
+		)
+
 	#next_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	#prev_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 
 	#supplier_catalog = relationship('SupplierCatalog', backref=backref('supplier_catalog_item_versions')
-	#supplier_catalog_item_field = relationship('SupplierCatalogItemField', backref=backref('supplier_catalog_item_versions'))
+	#supplier_catalog_item_field = relationship('SupplierCatalogItemField')

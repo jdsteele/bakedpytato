@@ -7,7 +7,7 @@ import stat
 
 tops = ['/var/www/bakedpytato', '/var/log/bakedpytato']
 
-executables = ['test.py', 'update_all.py', 'fixperms.py']
+executables = ['test.py', 'update_all.py', 'fixperms.py', 'mirror.py']
 
 file_owner = pwd.getpwnam('www-data')[2]
 file_group = grp.getgrnam('www-data')[2]

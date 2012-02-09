@@ -175,4 +175,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 				ratio = (Decimal(100) - discount) / Decimal(100)
 				data['cost'] = data['retail'] * ratio
 
+			data['phased_out'] = False
+			data['special_cost'] = Decimal(0)
+
 		return data

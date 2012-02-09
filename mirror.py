@@ -64,7 +64,7 @@ table_names = [
 	#'customer_order_items',
 	#'customer_orders',
 	#'customer_shipment_items',
-	#'file_imports', 
+	'file_imports', 
 	#'inventory_items',
 	#'manufacturer_conversions',
 	#'manufacturers',
@@ -74,10 +74,11 @@ table_names = [
 	#'products',
 	#'scale_conversions',
 	#'scales',
-	#'supplier_catalog_items', 
-	'supplier_catalog_item_fields', 
+	'supplier_catalog_filters',
+	'supplier_catalog_items', 
+	#'supplier_catalog_item_fields', 
 	#'supplier_catalog_item_versions',
-	#'supplier_catalogs'
+	'supplier_catalogs'
 ]
 
 

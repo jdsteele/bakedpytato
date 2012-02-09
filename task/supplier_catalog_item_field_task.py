@@ -16,16 +16,19 @@
 #import hashlib
 #import json
 import logging 
-#import re
+import re
+from decimal import *
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
 
 #Application Library
+import cfg
 #import model
 from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
+from priceutil import decimal_round
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
@@ -84,10 +87,18 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					field = data[field_name]
 					if isinstance(field, basestring):
 						field = field.strip()
+						field = re.sub(r'\s\s+', ' ', field) #multiple spaces become single
 						
-					if field_name == 'product_identifier':
-						field = field.lstrip('0')
 						
+						if field_name == 'product_identifier':
+							field = field.lstrip('0')
+					elif isinstance(field, Decimal):
+						if field_name in ['cost', 'special_cost']:
+							field = decimal_round(field, cfg.cost_decimals)
+
+						if field_name in ['retail']:
+							field = decimal_round(field, cfg.retail_decimals)
+
 					setattr(supplier_catalog_item_field, field_name, field)
 				else:
 					setattr(supplier_catalog_item_field, field_name, None)
