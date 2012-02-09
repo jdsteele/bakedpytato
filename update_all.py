@@ -18,7 +18,7 @@ from task import *
 
 while(True):
 
-	SupplierCatalogTask().load()
+	SupplierCatalogTask().load_all()
 	SupplierCatalogTask().update_all()
 
 	SupplierCatalogItemVersionTask().load()

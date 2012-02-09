@@ -74,11 +74,11 @@ table_names = [
 	#'products',
 	#'scale_conversions',
 	#'scales',
-	'supplier_catalog_filters',
-	'supplier_catalog_items', 
+	#'supplier_catalog_filters',
+	#'supplier_catalog_items', 
 	#'supplier_catalog_item_fields', 
 	#'supplier_catalog_item_versions',
-	'supplier_catalogs'
+	#'supplier_catalogs'
 ]
 
 
