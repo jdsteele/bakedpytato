@@ -21,8 +21,8 @@ import uuid
 
 class SupplierCatalogItemVersionMixin(object):
 
-	effective = Column(DateTime)
-	ghost = Column(Boolean, default=False)
+	#effective = Column(DateTime)
+	#ghost = Column(Boolean, default=False)
 	row_number = Column(Integer)
 		
 	@declared_attr
