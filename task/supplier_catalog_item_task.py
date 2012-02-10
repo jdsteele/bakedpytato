@@ -105,12 +105,9 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.ts['supplier_total'] = len(self.plugins)
 		self.ts['supplier_done'] = 0
 		
-		#for plug in self.plugins.itervalues():
-		plug = self.plugins[uuid.UUID('4f8299dc-0fc5-11e1-9b8e-00163e000001')]
-		print plug
-		try:
-			self.session.begin(subtransactions=True)
-			for x in range(2):
+		for plug in self.plugins.itervalues():
+			try:
+				self.session.begin(subtransactions=True)
 				supplier_id = plug.supplier_id()
 				
 				supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
@@ -121,11 +118,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 					logger.error("No Latest SupplierCatalog Found for Supplier %s", supplier_id)
 				if self.ts['supplier_done'] % 1000 == 0:
 					self.session.flush()
-				self.ts['supplier_done'] += 1
-			self.session.commit()
-		except Exception as e:
-			self.session.rollback()
-			logger.critical("Caught Exception %s", e)
+				self.session.commit()
+			except Exception as e:
+				self.session.rollback()
+				logger.critical("Caught Exception %s", e)
+			self.ts['supplier_done'] += 1
 		self.ts.finish()
 		logger.debug("End load_all()")
 

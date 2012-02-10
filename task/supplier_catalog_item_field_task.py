@@ -24,7 +24,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 #Application Library
 import cfg
-#import model
+import model
 from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
@@ -109,3 +109,38 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			for field_name in self.field_names:
 				setattr(supplier_catalog_item_field, field_name, None)
 
+
+
+	def vacuum(self):
+		logger.debug('Begin vacuum()')
+		##TODO delete SCIFields with SCFilterId not found in SCFilter
+		self.plugins = self.load_plugins()
+
+		self.session.begin()
+		
+		ts = self.term_stat('Vacuuming', len(self.plugins))
+		
+		for plug in self.plugins.itervalues():
+			supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+			model_name = plug.version_model()  + 'Model'
+			VersionModel = getattr(model, model_name)
+			query = self.session.query(SupplierCatalogItemFieldModel)
+			query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
+			ts['sub_done'] = 0
+			for supplier_catalog_item_field in query:
+				count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
+				if count > 1:
+					supplier_catalog_item_field.supplier_catalog_item_version_count = count
+				else:
+					logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
+					#self.session.delete(supplier_catalog_item_field)
+				ts['sub_done'] += 1
+			ts['done'] += 1
+					
+		self.session.commit()
+		logger.debug('End vacuum()')
+
+	def vacuum_count(self, supplier_catalog_item_field, VersionModel):
+		query = self.session.query(VersionModel)
+		query = query.filter(VersionModel.supplier_catalog_item_field_id == supplier_catalog_item_field.id)
+		return query.count()
