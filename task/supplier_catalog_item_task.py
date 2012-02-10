@@ -186,7 +186,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if data is None:
 			return None
 		
-		for (key, value) in self.defaults.iteritems()
+		for (key, value) in self.defaults.iteritems():
 			if key not in data or data[key] is None:
 				data[key] = value
 		return data
