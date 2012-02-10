@@ -24,7 +24,7 @@ import session
 #from tasks.base_task import BaseTask
 #from tasks.supplier_catalog_item_task import SupplierCatalogItemTask
 
-local_engine = session.engine
+local_engine = session.local_engine()
 remote_engine = session.remote_engine()
 
 local_meta = MetaData()
@@ -56,6 +56,22 @@ def int_to_uuid(i):
 	u = uuid.UUID(int=i)
 	return str(u)
 
+def get_lines(f, line_count):
+	lines = []
+	i = 0
+	while True:
+		line = f.readline().rstrip()
+		if line == "" or line is None:
+			if len(lines) > 0:
+				yield lines
+			break
+		if i == line_count:
+			yield lines
+			lines = []
+			i = 0
+		lines.append(line)
+		i += 1
+
 table_names = [
 	#'barcode_conversions',
 	#'catalog_items',
@@ -64,7 +80,7 @@ table_names = [
 	#'customer_order_items',
 	#'customer_orders',
 	#'customer_shipment_items',
-	'file_imports', 
+	#'file_imports', 
 	#'inventory_items',
 	#'manufacturer_conversions',
 	#'manufacturers',
@@ -74,11 +90,15 @@ table_names = [
 	#'products',
 	#'scale_conversions',
 	#'scales',
-	#'supplier_catalog_filters',
+	'supplier_catalog_filters',
 	#'supplier_catalog_items', 
 	#'supplier_catalog_item_fields', 
-	#'supplier_catalog_item_versions',
+	#'supplier_catalog_item_bowser_versions',
+	#'supplier_catalog_item_emery_versions',
+	#'supplier_catalog_item_exactrail_versions',
+	#'supplier_catalog_item_walthers_versions',
 	#'supplier_catalogs'
+	'suppliers'
 ]
 
 
@@ -94,7 +114,7 @@ for table_name in table_names:
 	local_f = tempfile.SpooledTemporaryFile(max_size=(256*1024*1024))
 
 	print 'Getting Remote Ids...'
-
+	remote_engine.begin()
 	s = select([remote_table.c.id]).order_by(remote_table.c.id.asc())
 	result = remote_engine.execute(s)
 	for r in result:
@@ -104,9 +124,10 @@ for table_name in table_names:
 	remote_len = remote_f.tell()
 	
 	remote_f.seek(0)
+	remote_engine.commit()
 
 	print 'Getting Local Ids...'
-
+	local_engine.begin()
 	s = select([local_table.c.id]).order_by(local_table.c.id.asc())
 	result = local_engine.execute(s)
 	for r in result:
@@ -116,7 +137,8 @@ for table_name in table_names:
 	local_len = local_f.tell()
 
 	local_f.seek(0)
-
+	local_engine.commit()
+	
 	updatable_f = tempfile.SpooledTemporaryFile(max_size=(256*1024*1024))
 	insertable_f = tempfile.SpooledTemporaryFile(max_size=(256*1024*1024))
 	deletable_f = tempfile.SpooledTemporaryFile(max_size=(256*1024*1024))
@@ -175,7 +197,8 @@ for table_name in table_names:
 	ts.finish()
 	
 	#Delete
-	
+	local_engine.begin()
+	remote_engine.begin()
 	deletable_len = deletable_f.tell()
 	deletable_f.seek(0)
 
@@ -186,59 +209,62 @@ for table_name in table_names:
 		result = local_engine.execute(s)
 		ts['done'] = deletable_f.tell()
 		deletable_id = deletable_f.readline().rstrip()
-	ts.finish()
 	deletable_f.close()
-
+	remote_engine.commit()
+	local_engine.commit()
+	ts.finish()
+	
 	#Insert
-
+	local_engine.begin()
+	remote_engine.begin()
 	insertable_len = insertable_f.tell()
 	insertable_f.seek(0)
 
 	ts = get_ts(insertable_len, 'Inserting')
-	insertable_id = insertable_f.readline().rstrip()
-	while (insertable_id is not None) and (insertable_id != ''):
-		s = remote_table.select().where(remote_table.c.id == insertable_id)
-		##print s
+	for lines in get_lines(insertable_f, 100):
+		s = remote_table.select().where(remote_table.c.id.in_(lines))
+		#print s
 		remote_results = remote_engine.execute(s)
-
-		row = remote_results.fetchone()
-
-		##print remote_result
-		d = dict()
-		for (key, val) in row.items():
-			d[key] = val
-
-		s = local_table.insert().values(d)
-		##print s
-		local_result = local_engine.execute(s)
+		#print remote_results
+		rows = remote_results.fetchall()
+		for row in rows:
+			d = dict()
+			for (key, val) in row.items():
+				d[key] = val
+			ss = local_table.insert().values(d)
+			local_result = local_engine.execute(ss)
 		ts['done'] = insertable_f.tell()
-		insertable_id = insertable_f.readline().rstrip()
-	ts.finish()
 	insertable_f.close()
+	remote_engine.commit()
+	local_engine.commit()
+	ts.finish()
 	
 	#Update
-	
+	local_engine.begin()
+	remote_engine.begin()
+
 	updatable_len = updatable_f.tell()
 	updatable_f.seek(0)
-
 	ts = get_ts(updatable_len, 'Updating')
-	updatable_id = updatable_f.readline().rstrip()
-	while (updatable_id is not None) and (updatable_id != ''):
-		s = remote_table.select().where(remote_table.c.id == updatable_id)
-		##print s
+	for lines in get_lines(updatable_f, 100):
+		s = remote_table.select().where(remote_table.c.id.in_(lines))
+		#print s
 		remote_results = remote_engine.execute(s)
-
-		row = remote_results.fetchone()
-
-		##print remote_result
-		d = dict()
-		for (key, val) in row.items():
-			d[key] = val
-
-		s = local_table.update().values(d).where(local_table.c.id == updatable_id)
-		##print s
-		local_result = local_engine.execute(s)
+		#print remote_results
+		rows = remote_results.fetchall()
+		for row in rows:
+			d = dict()
+			for (key, val) in row.items():
+				d[key] = val
+			ss = local_table.update().values(d).where(local_table.c.id == d['id'])
+			#print ss
+			local_result = local_engine.execute(ss)
+			
+		local_engine.commit()
+		local_engine.begin()
 		ts['done'] = updatable_f.tell()
-		updatable_id = updatable_f.readline().rstrip()
-	ts.finish()
 	updatable_f.close()
+	remote_engine.commit()
+	local_engine.commit()
+	ts.finish()
+

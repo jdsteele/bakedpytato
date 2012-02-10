@@ -16,7 +16,7 @@ import logging
 import re
 import struct
 import tempfile
-from datetime import datetime
+from datetime import date, datetime
 from decimal import *
 
 #Extended Library
@@ -30,9 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 #Constants
-
-MANUFACTURER = 'MANUFACTURER'
-PRODUCT = 'PRODUCT'
 
 MASK_PRICE_RETAIL = 0x1
 MASK_PRICE_DEALER = 0x2
@@ -84,12 +81,12 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		while f.tell() < f_len:
 			data = dict()
 			
-			q = data[MANUFACTURER] = f.read(4).strip(chr(0)).strip()
+			q = data['MANUFACTURER'] = f.read(4).strip(chr(0)).strip()
 			
 			if q == '':
 				return
 			
-			data[PRODUCT] = f.read(10).strip(chr(0)).strip()
+			data['PRODUCT'] = f.read(10).strip(chr(0)).strip()
 			
 			#print f.tell(), "OF", f_len
 			
@@ -97,79 +94,79 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		
 			if mask & MASK_PRICE_RETAIL:
 				#Little Endian Unsigned Long
-				data[MASK_PRICE_RETAIL] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_RETAIL'] = struct.unpack('<L', f.read(4))[0]
 		
 			if mask & MASK_PRICE_DEALER:
 				#Little Endian Unsigned Long
-				data[MASK_PRICE_DEALER] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_DEALER'] = struct.unpack('<L', f.read(4))[0]
 		
 			if mask & MASK_PRICE_BOX:
 				#Little Endian Unsigned Long
-				data[MASK_PRICE_BOX] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_BOX'] = struct.unpack('<L', f.read(4))[0]
 		
 			if mask & MASK_PRICE_CASE:
 				#Little Endian Unsigned Long
-				data[MASK_PRICE_CASE] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_CASE'] = struct.unpack('<L', f.read(4))[0]
 			
 			if mask & MASK_AVAILABILITY:
 				#Little Endian Unsigned Long
-				data[MASK_AVAILABILITY] = struct.unpack('<L', f.read(4))[0]
+				data['AVAILABILITY'] = struct.unpack('<L', f.read(4))[0]
 
 			if mask & MASK_IS_PHASED_OUT:
 				#char
-				data[MASK_IS_PHASED_OUT] = f.read(1).strip(chr(0)).strip()
+				data['IS_PHASED_OUT'] = f.read(1).strip(chr(0)).strip()
 
 			if mask & MASK_IS_IN_STOCK:
 				#char
-				data[MASK_IS_IN_STOCK] = f.read(1).strip(chr(0)).strip()
+				data['IS_IN_STOCK'] = f.read(1).strip(chr(0)).strip()
 
 			if mask & MASK_IS_AVAILABLE:
 				#char
-				data[MASK_IS_AVAILABLE] = f.read(1).strip(chr(0)).strip()
+				data['IS_AVAILABLE'] = f.read(1).strip(chr(0)).strip()
 				
 			if mask & MASK_SCALE:
 				#char * 4
-				data[MASK_SCALE] = f.read(4).strip(chr(0)).strip()
+				data['SCALE'] = f.read(4).strip(chr(0)).strip()
 				
 			if mask & MASK_DISCOUNT:
 				#char
-				data[MASK_DISCOUNT] = f.read(1).strip(chr(0)).strip()
+				data['DISCOUNT'] = f.read(1).strip(chr(0)).strip()
 				
 			if mask & MASK_QTY_BOX:
 				#Little Endian Unsigned Short
-				data[MASK_QTY_BOX] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_BOX'] = struct.unpack('<H', f.read(2))[0]
 				
 			if mask & MASK_QTY_CASE:
 				#Little Endian Unsigned Short
-				data[MASK_QTY_CASE] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_CASE'] = struct.unpack('<H', f.read(2))[0]
 				
 			if mask & MASK_QTY_MINIMUM:
 				#Little Endian Unsigned Short
-				data[MASK_QTY_MINIMUM] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_MINIMUM'] = struct.unpack('<H', f.read(2))[0]
 				
 			if mask & MASK_CATEGORY:
 				#char * 3
-				data[MASK_CATEGORY] = f.read(3).strip(chr(0)).strip()
+				data['CATEGORY'] = f.read(3).strip(chr(0)).strip()
 				
 			if mask & MASK_SUB_CATEGORY:
 				#char * 2
-				data[MASK_SUB_CATEGORY] = f.read(2).strip(chr(0)).strip()
+				data['SUB_CATEGORY'] = f.read(2).strip(chr(0)).strip()
 				
 			if mask & MASK_CATALOG_PAGE:
 				#Little Endian Unsigned Short
-				data[MASK_CATALOG_PAGE] = struct.unpack('<H', f.read(2))[0]
+				data['CATALOG_PAGE'] = struct.unpack('<H', f.read(2))[0]
 
 			if mask & MASK_CATALOG:
 				#char * 11
-				data[MASK_CATALOG] = f.read(11).strip(chr(0)).strip()
+				data['CATALOG'] = f.read(11).strip(chr(0)).strip()
 
 			if mask & MASK_QTY_2:
 				#Little Endian Unsigned Short
-				data[MASK_QTY_2] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_2'] = struct.unpack('<H', f.read(2))[0]
 
 			if mask & MASK_QTY_4:
 				#Little Endian Unsigned Short
-				data[MASK_QTY_4] = struct.unpack('<L', f.read(4))[0]
+				data['QTY_4'] = struct.unpack('<L', f.read(4))[0]
 
 			if mask & MASK_NAME:
 				#NULL Terminated String
@@ -178,7 +175,7 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				while (s != chr(0)):
 					s = f.read(1)
 					st = st + s
-				data[MASK_NAME] = st.strip(chr(0)).strip()
+				data['NAME'] = st.strip(chr(0)).strip()
 			yield data
 
 
@@ -194,48 +191,52 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 
 	def update_fields(self, fields):
 		"""Update Fields"""
+		
 		data = dict()
 		
-		if MANUFACTURER in fields and fields[MANUFACTURER] is not None:
-			data['manufacturer_identifier'] = fields[MANUFACTURER]
+		if 'MANUFACTURER' in fields and fields['MANUFACTURER'] is not None:
+			data['manufacturer_identifier'] = fields['MANUFACTURER']
 			
-		if PRODUCT in fields and fields[PRODUCT] is not None:
-			data['product_identifier'] = fields[PRODUCT]
+		if 'PRODUCT' in fields and fields['PRODUCT'] is not None:
+			data['product_identifier'] = fields['PRODUCT']
 
-		if MASK_SCALE in fields and fields[MASK_SCALE] is not None:
-			data['scale_identifier'] = fields[MASK_SCALE]
+		if 'SCALE' in fields and fields['SCALE'] is not None:
+			data['scale_identifier'] = fields['SCALE']
 			
-		if MASK_CATEGORY in fields and fields[MASK_CATEGORY] is not None:
-			data['category_identifier'] = fields[MASK_CATEGORY]
+		if 'CATEGORY' in fields and fields['CATEGORY'] is not None:
+			data['category_identifier'] = fields['CATEGORY']
 
-		if MASK_NAME in fields and fields[MASK_NAME] is not None:
-			data['name'] = fields[MASK_NAME]
+		if 'NAME' in fields and fields['NAME'] is not None:
+			data['name'] = fields['NAME']
 			
-		if MASK_PRICE_RETAIL in fields and fields[MASK_PRICE_RETAIL] is not None:
-			data['retail'] = Decimal(fields[MASK_PRICE_RETAIL]) / Decimal(100)
+		if 'PRICE_RETAIL' in fields and fields['PRICE_RETAIL'] is not None:
+			data['retail'] = Decimal(fields['PRICE_RETAIL']) / Decimal(100)
 
-		if MASK_PRICE_DEALER in fields and fields[MASK_PRICE_DEALER] is not None:
-			data['cost'] = Decimal(fields[MASK_PRICE_DEALER]) / Decimal(100)
+		if 'PRICE_DEALER' in fields and fields['PRICE_DEALER'] is not None:
+			data['cost'] = Decimal(fields['PRICE_DEALER']) / Decimal(100)
 			
-		if MASK_AVAILABILITY in fields and fields[MASK_AVAILABILITY] is not None:
-			if fields[MASK_AVAILABILITY] > 90000000:
+		if 'AVAILABILITY' in fields and fields['AVAILABILITY'] is not None:
+			if fields['AVAILABILITY'] < 1000000 and fields['AVAILABILITY'] > 0:
 				data['availability_indefinite'] = True
 				data['available'] = date(9999, 1, 1)
 			else:
-				m = re.match(r'^(....)(..)(..)$', str(fields[MASK_AVAILABILITY]))
+				m = re.match(r'^(....)(..)(..)$', str(fields['MASK_AVAILABILITY']))
 				if m:
 					data['availability_indefinite'] = False
-					data['available'] = date(m.group(1), m.group(2), m.group(3))
+					data['available'] = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
 					
-		if MASK_IS_PHASED_OUT in fields and fields[MASK_IS_PHASED_OUT] is not None:
-			if fields[MASK_IS_PHASED_OUT] in ['Y', 'N']:
-				data['phased_out'] = (fields[MASK_IS_PHASED_OUT] == 'Y')
+		if 'IS_PHASED_OUT' in fields and fields['IS_PHASED_OUT'] is not None:
+			if fields['IS_PHASED_OUT'] in ['Y', 'N']:
+				data['phased_out'] = (fields['IS_PHASED_OUT'] == 'Y')
 			else:
-				logger.error("Field MASK_IS_PHASED_OUT has unexpected value %s", fields[MASK_IS_PHASED_OUT])
+				logger.error("Field MASK_IS_PHASED_OUT has unexpected value %s", fields['IS_PHASED_OUT'])
 
-		if MASK_IS_IN_STOCK in fields and fields[MASK_IS_IN_STOCK] is not None:
-			if fields[MASK_IS_IN_STOCK] in ['Y', 'N']:
-				data['stock'] = (fields[MASK_IS_IN_STOCK] == 'Y')
+		if 'IS_IN_STOCK' in fields and fields['IS_IN_STOCK'] is not None:
+			if fields['IS_IN_STOCK'] in ['Y', 'N']:
+				data['stock'] = (fields['IS_IN_STOCK'] == 'Y')
 			else:
-				logger.error("Field MASK_IS_IN_STOCK has unexpected value %s", fields[MASK_IS_IN_STOCK])
+				logger.error("Field MASK_IS_IN_STOCK has unexpected value %s", fields['IS_IN_STOCK'])
+		#print fields
+		print data
+		return data
 

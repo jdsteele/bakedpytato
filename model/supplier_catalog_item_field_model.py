@@ -48,6 +48,7 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 
 	def get_fields(self):
 		if self.fields is None:
+			logger.error("fields is empty")
 			return None
 		return self.decode_json(self.fields)
 		

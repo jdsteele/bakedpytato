@@ -23,7 +23,7 @@ while(True):
 
 	SupplierCatalogItemVersionTask().load_all(
 		supplier_id='4e8cfc8d-fa9c-4416-92e0-541066c1c7e4', 
-		item_versions_loaded=False
+		#item_versions_loaded=False
 	)
 
 	#SupplierCatalogItemFieldTask().update_all()

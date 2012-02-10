@@ -17,8 +17,9 @@ import pstats
 #from plugin import *
 #from model import *
 
-#task = SupplierCatalogTask()
-#cProfile.run( 'task.load()' , 'fooprof')
+
+#cProfile.run( 'SupplierCatalogTask().load()' , '/tmp/fooprof')
+#cProfile.run( 'SupplierSpecialTask().load_all()' , '/tmp/fooprof')
 
 
 #task.update_all()
@@ -26,13 +27,13 @@ import pstats
 #task1 = SupplierCatalogItemVersionTask()
 #cProfile.run( 'task1.load()' , 'fooprof')
 
-#cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
+cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
 
 #task2.update_all()
 
 #task1.update_all()
 
-#cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
+cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
 
 #task = SupplierCatalogItemTask()
 #cProfile.run( 'task.update()' , 'fooprof')
@@ -54,24 +55,26 @@ import pstats
 #p = pstats.Stats('/tmp/fooprof')
 #p.sort_stats('time').print_stats(40)
 
-import math
-from decimal import *
+#from Crypto import Cipher, Random
+#from Crypto.Util import RFC1751
 
-tax_rate = Decimal(0.06)
-old_tax = 0
-for x in xrange(1,1001):
-	total = Decimal(x)
-	low = int(total * tax_rate * 99)
-	high = low + 2
-	#print total, low, high
-	done = False
-	for t in xrange(low,high):
-		tax = Decimal(t) / Decimal(100)
-		principal = total - tax
-		if principal * tax_rate <= tax:
-			print ('%6.2f = P(%6.2f) + T(%6.2f)' % (total, principal, tax))
-			done = True
-			break
-	if done is False:
-		exit(0)
-	
+#key = Random.get_random_bytes(128/8)
+
+#ekey = RFC1751.key_to_english(key) 
+
+#print ekey
+
+#Krypt = Cipher.Blowfish
+
+#c = Krypt.new(key, Krypt.MODE_CFB)
+
+#e = c.encrypt('Hello World')
+#print e
+
+
+#key = RFC1751.english_to_key(ekey) 
+
+#c = Krypt.new(key, Krypt.MODE_CFB)
+
+#d = c.decrypt(e)
+#print d

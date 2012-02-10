@@ -62,11 +62,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 		query = self.session.query(SupplierCatalogItemFieldModel)
 		self.ts = self.term_stat('SupplierCatalogItemField Update All', query.count())
 		for supplier_catalog_item_field in query.yield_per(1000):
-			#self.session.begin(subtransactions=True)
 			self.update_one(supplier_catalog_item_field)
 			if self.ts['done'] % 1000 == 0:
 				self.session.flush()
-			#self.session.commit()
 			self.ts['done'] += 1
 		self.session.commit()
 		self.ts.finish()
@@ -78,6 +76,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			return None
 		plug = self.plugins[supplier_catalog_item_field.supplier_catalog_filter_id]
 		fields = supplier_catalog_item_field.get_fields()
+		
+		
+		
 		data = plug.update_fields(fields)
 		if data is not None:
 			#print "Fields:", fields
@@ -101,9 +102,10 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 
 					setattr(supplier_catalog_item_field, field_name, field)
 				else:
+					#logger.warning("Plugin returned empty data for %s %s", field_name, fields)
 					setattr(supplier_catalog_item_field, field_name, None)
 		else:
-			#logger.warning("Plugin returned empty data %s %s", supplier_catalog_item_field.supplier_catalog_filter_id, fields)
+			logger.warning("Plugin returned empty data %s %s %s", supplier_catalog_item_field.id, supplier_catalog_item_field.supplier_catalog_filter_id, fields)
 			for field_name in self.field_names:
 				setattr(supplier_catalog_item_field, field_name, None)
 

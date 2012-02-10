@@ -78,8 +78,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.load_all()
 		logger.debug("End load()")
 
-	def load_all(self):
-		
+	def load_all(self, supplier_id=None):
+		logger.debug("Begin load_all()")
 		self.ts = ttystatus.TerminalStatus(period=1)
 		self.ts.add(ttystatus.Literal('SupplierCatalogItem Load  Elapsed: '))
 		self.ts.add(ttystatus.ElapsedTime())
@@ -102,22 +102,32 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.ts['product_done'] = 0
 
 		
-		self.session.begin(subtransactions=True)
 		self.ts['supplier_total'] = len(self.plugins)
 		self.ts['supplier_done'] = 0
 		
-		for plug in self.plugins.itervalues():
-			supplier_id = plug.supplier_id()
-			
-			supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
-			if supplier_catalog is not None:
-				self.supplier_catalog_id = supplier_catalog.id
-			
-				self.load_supplier(plug, supplier_id)
-			else:
-				logger.error("No Latest SupplierCatalog Found for Supplier %s", supplier_id)
-			self.ts['supplier_done'] += 1
-		self.session.commit()
+		#for plug in self.plugins.itervalues():
+		plug = self.plugins[uuid.UUID('4f8299dc-0fc5-11e1-9b8e-00163e000001')]
+		print plug
+		try:
+			self.session.begin(subtransactions=True)
+			for x in range(2):
+				supplier_id = plug.supplier_id()
+				
+				supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
+				if supplier_catalog is not None:
+					self.supplier_catalog_id = supplier_catalog.id
+					self.load_supplier(plug, supplier_id)
+				else:
+					logger.error("No Latest SupplierCatalog Found for Supplier %s", supplier_id)
+				if self.ts['supplier_done'] % 1000 == 0:
+					self.session.flush()
+				self.ts['supplier_done'] += 1
+			self.session.commit()
+		except Exception as e:
+			self.session.rollback()
+			logger.critical("Caught Exception %s", e)
+		self.ts.finish()
+		logger.debug("End load_all()")
 
 	def load_latest_supplier_catalog(self, supplier_id):
 		query = self.session.query(SupplierCatalogModel)
@@ -125,7 +135,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		return query.order_by(desc(SupplierCatalogModel.issue_date)).first()
 
 	def load_supplier(self, plug, supplier_id):
-		#print "Supplier", supplier_id
+		print "Supplier", supplier_id
 		query = self.session.query(SupplierCatalogItemFieldModel.manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier != None)
@@ -140,7 +150,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.ts['manufacturer_done'] += 1
 
 	def load_manufacturer(self, plug, supplier_id, manufacturer_identifier):
-		#print "Manufacturer", supplier_id, manufacturer_identifier
+		print "Manufacturer", supplier_id, manufacturer_identifier
 		query = self.session.query(SupplierCatalogItemFieldModel.product_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
@@ -152,6 +162,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		
 		for (product_identifier, ) in product_identifiers:
 			self.ts['product'] = product_identifier
+			print Supplier_id, manufacturer_identifier, product_identifier
 			data = self.coalesce(plug, supplier_id, manufacturer_identifier, product_identifier)
 			if data is not None:
 				self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
@@ -159,9 +170,9 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def coalesce(self, plug, supplier_id, manufacturer_identifier, product_identifier):
 		model_name = plug.version_model()  + 'Model'
-		#print model_name
+		print model_name
 		VersionModel = getattr(model, model_name)
-		#print VersionModel
+		print VersionModel
 		
 		query = self.session.query(SupplierCatalogItemFieldModel.id)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
@@ -286,18 +297,20 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.session.add(supplier_catalog_item)
 		
 		for (field_name, item_name) in self.field_names.iteritems():
-			#self.compare(
-				#field_name,
-				#data[field_name],
-				#getattr(supplier_catalog_item, item_name)
-			#)
+			self.compare(
+				manufacturer_identifier, 
+				product_identifier,
+				field_name,
+				data[field_name],
+				getattr(supplier_catalog_item, item_name)
+			)
 			setattr(supplier_catalog_item, item_name, data[field_name])
 		self.session.flush()
 
-	def compare(self, name, left, right):
-		if left != right:
-			pass
-			print name, left, '!=', right
+	def compare(self, manufacturer_identifier, product_identifier, name, left, right):
+		#if left != right:
+		if True:
+			print ("\n%3s-%10s %10s %20s != %20s" % (manufacturer_identifier, product_identifier, name, left, right))
 
 
 	def update(self):
@@ -314,13 +327,14 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		
 		modified_since = SettingTask().get(__name__, 'update.last_modified', datetime(1970,1,1))
 		logger.info("Update ModifiedSince %s", modified_since)
-		self.update_all(modified_since)
-		SettingTask().set(__name__, 'update.last_modified', start_time)
+		if self.update_all(modified_since):
+			SettingTask().set(__name__, 'update.last_modified', start_time)
 		logger.debug("End update_modified()")
 
 
 	def update_all(self, modified_since=None):
 		"""Update All"""
+		result = None
 		logger.debug("Begin update_all()")
 		query = self.session.query(SupplierCatalogItemModel)
 		if modified_since:
@@ -328,13 +342,19 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 		ts = self.term_stat('SupplierCatalogItem Update', query.count())
 
-		for supplier_catalog_item in query.yield_per(1000):
-			#self.session.begin(subtransactions=True)
-			self.update_one(supplier_catalog_item)
-			#self.session.commit()
-			ts['done'] += 1
+		try:
+			self.session.begin(subtransactions=True)
+			for supplier_catalog_item in query.yield_per(1000):
+				self.update_one(supplier_catalog_item)
+				ts['done'] += 1
+			self.session.commit()
+			result = True
+		except Exception as e:
+			self.session.rollback()
+			logger.critical("Caught Exception %s", e)
 		ts.finish()
 		logger.debug("End update_all()")
+		return result
 			
 	def update_one(self, supplier_catalog_item):
 		"""
