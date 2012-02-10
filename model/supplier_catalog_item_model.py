@@ -28,6 +28,7 @@ class SupplierCatalogItemModel(BaseModel, DefaultMixin):
 	"""cost per unit"""
 	
 	in_stock = Column(Boolean, default=False)
+	legacy_flag = Column(Integer, default=0)
 	manufacturer_id = Column(UUID(as_uuid=True), ForeignKey('manufacturers.id'))
 	manufacturer_identifier = Column(String)
 	name = Column(String)

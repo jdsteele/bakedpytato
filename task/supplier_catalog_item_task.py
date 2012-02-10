@@ -67,7 +67,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		'special_cost': Decimal(0),
 		'stock': False,
 		'phased_out': False,
-		'advanced': False
+		'advanced': False,
+		'legacy_flag': 128
 	}
 
 	def load(self):
@@ -171,8 +172,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (supplier_catalog_item_field_id, ) in query.all():
 			s.add(supplier_catalog_item_field_id)
 
-		
-
 		if plug.opaque() is True:
 			if plug.ghost() is True:
 				data = self.coalesce_opaque_ghost(VersionModel, s, plug)
@@ -187,8 +186,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if data is None:
 			return None
 		
-		for (key, value) in self.defaults.iteritems():
-			if data[key] is None:
+		for (key, value) in self.defaults.iteritems()
+			if key not in data or data[key] is None:
 				data[key] = value
 		return data
 
