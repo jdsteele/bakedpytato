@@ -15,21 +15,40 @@
 
 import cfg
 from task import *
+from time import sleep
 
 while(True):
 
 	SupplierCatalogTask().load_all()
 	SupplierCatalogTask().update_all()
 
+	SupplierCatalogItemVersionTask().vacuum()
 	SupplierCatalogItemVersionTask().load()
 
-	SupplierCatalogItemFieldTask().update_all()
+	SupplierCatalogItemFieldTask().vacuum()
+	SupplierCatalogItemFieldTask().update()
 
-	#SupplierCatalogItemVersionTask().update_all()
-
+	#SupplierCatalogItemTask().vacuum()
 	SupplierCatalogItemTask().load()
 	SupplierCatalogItemTask().update()
+	
+	#InventoryItemTask().load()
+	
+	#sleep(60)
 	
 	ProductTask().load_all()
 	ProductTask().update_all()
 	ProductTask().sort()
+
+	#ProductDailyStat().load()
+	#ProductWeeklyStat().load()
+	#ProductMonthlyStat().load()
+	#ProductYearlyStat().load()
+
+	#ProductPackageTask.update()
+	
+	#CatalogTask().load()
+	#CatalogCategoryTask().load()
+	#CatalogTask().update()
+
+	sleep(60*10) #10 mins

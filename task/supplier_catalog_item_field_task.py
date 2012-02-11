@@ -53,6 +53,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 		'stock',
 		'to_be_announced'
 	]
+
+	def update(self):
+		return self.update_all()
 	
 	def update_all(self):
 		"""Update All"""
@@ -129,7 +132,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			ts['sub_done'] = 0
 			for supplier_catalog_item_field in query:
 				count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
-				if count > 1:
+				if count > 0:
 					supplier_catalog_item_field.supplier_catalog_item_version_count = count
 				else:
 					logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)

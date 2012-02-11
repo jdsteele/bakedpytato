@@ -27,9 +27,12 @@ import pstats
 #task1 = SupplierCatalogItemVersionTask()
 #cProfile.run( 'task1.load()' , 'fooprof')
 
-cProfile.run( 'SupplierCatalogItemFieldTask().vacuum()', '/tmp/fooprof' )
+#cProfile.run( 'SupplierCatalogItemVersionTask().vacuum()', '/tmp/fooprof' )
 
-#cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
+
+#cProfile.run( 'SupplierCatalogItemFieldTask().vacuum()', '/tmp/fooprof' )
+
+cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
 
 #task2.update_all()
 

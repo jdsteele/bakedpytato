@@ -165,3 +165,33 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		values['effective'] = supplier_catalog.issue_date
 		query.update(values, synchronize_session=False)
 		self.session.commit()
+
+	def vacuum(self):
+		logger.debug('Begin vacuum()')
+		self.plugins = self.load_plugins()
+
+		self.session.begin()
+		
+		ts = self.term_stat('Vacuuming', len(self.plugins))
+		
+		for plug in self.plugins.itervalues():
+			supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+			model_name = plug.version_model()  + 'Model'
+			VersionModel = getattr(model, model_name)
+			query = self.session.query(VersionModel)
+			ts['sub_done'] = 0
+			for supplier_catalog_item_version in query.yield_per(100):
+				count = self.vacuum_count(supplier_catalog_item_version)
+				if count == 0:
+					logger.debug("Deleting %s %s", model_name, supplier_catalog_item_version.id)
+					#self.session.delete(supplier_catalog_item_version)
+				ts['sub_done'] += 1
+			ts['done'] += 1
+					
+		self.session.commit()
+		logger.debug('End vacuum()')
+
+	def vacuum_count(self, supplier_catalog_item_version):
+		query = self.session.query(SupplierCatalogModel)
+		query = query.filter(SupplierCatalogModel.id == supplier_catalog_item_version.supplier_catalog_id)
+		return query.count()
