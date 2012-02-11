@@ -51,6 +51,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 	def load_all(self, limit=None, item_versions_loaded=None, supplier_id=None):
 		"""Load All"""
 		logger.debug("Begin load_all(limit=%s, item_versions_loaded=%s)", limit, item_versions_loaded)
+		self.session.begin(subtransactions=True)
 		self.plugins = self.load_plugins()
 		query = self.session.query(SupplierCatalogModel)
 		query = query.order_by(desc(SupplierCatalogModel.issue_date))
@@ -68,11 +69,13 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 
 		self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
 		for supplier_catalog in query.yield_per(10):
-			self.session.begin(subtransactions=True)
+			
 			self.load_one(supplier_catalog)
 			supplier_catalog.item_versions_loaded = True
-			self.session.commit()
+			if self.ts['done'] % 1000 == 0 :
+				self.session.flush()
 			self.ts['done'] += 1
+		self.session.commit()
 		self.ts.finish()
 		logger.debug("End load_all()")
 		
@@ -82,10 +85,10 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		self.session.commit()
 			
 	def load_from_supplier_catalog(self, supplier_catalog):
-		self.session.begin(subtransactions=True)
 		if not supplier_catalog.supplier_catalog_filter_id in self.plugins:
 			logger.warning("Plugin %s Not Found For SupplierCatalog %s", supplier_catalog.supplier_catalog_filter_id, supplier_catalog.id)
 			return None
+		#self.session.begin(subtransactions=True)
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		self.ts['sub_done'] = 0
 		row_number = 0
@@ -95,12 +98,11 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			row_number += 1
 			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, row)
 			self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
-		self.session.commit()
+		#self.session.commit()
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, row):
+		#self.session.begin(subtransactions=True)
 		j = SupplierCatalogItemFieldModel.encode_json(row)
-
-		self.session.begin(subtransactions=True)
 		checksum = hashlib.sha1(j).hexdigest()
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		
@@ -116,11 +118,11 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		supplier_catalog_item_field.checksum = checksum
 		supplier_catalog_item_field.supplier_id = supplier_catalog.supplier_id
 		supplier_catalog_item_field.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
-		self.session.commit()
+		#self.session.commit()
 		return supplier_catalog_item_field
 
 	def load_supplier_catalog_item_version(self, supplier_catalog, supplier_catalog_item_field, row_number):
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		model_name = plug.version_model()  + 'Model'
 		VersionModel = getattr(model, model_name)
@@ -138,7 +140,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		supplier_catalog_item_version.row_number = row_number
 		supplier_catalog_item_version.effective = supplier_catalog.issue_date
 		supplier_catalog_item_version.ghost = False
-		self.session.commit()
+		#self.session.commit()
 
 
 	def update_all(self):
