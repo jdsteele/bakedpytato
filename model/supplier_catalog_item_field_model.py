@@ -67,7 +67,8 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 			#value = value.strip()
 			if value == "":
 				value = None
-				row[key] = value
+			
+			row[key] = value
 				
 		try:
 			j = json.dumps(row, sort_keys=True, separators=(',', ':'))

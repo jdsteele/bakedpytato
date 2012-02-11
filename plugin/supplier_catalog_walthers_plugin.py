@@ -237,6 +237,6 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 			else:
 				logger.error("Field MASK_IS_IN_STOCK has unexpected value %s", fields['IS_IN_STOCK'])
 		#print fields
-		print data
+		#print data
 		return data
 
