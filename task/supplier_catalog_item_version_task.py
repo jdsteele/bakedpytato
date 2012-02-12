@@ -51,7 +51,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 	def load_all(self, limit=None, item_versions_loaded=None, supplier_id=None):
 		"""Load All"""
 		logger.debug("Begin load_all(limit=%s, item_versions_loaded=%s)", limit, item_versions_loaded)
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		self.plugins = self.load_plugins()
 		query = self.session.query(SupplierCatalogModel)
 		query = query.order_by(desc(SupplierCatalogModel.issue_date))
@@ -75,7 +75,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			if self.ts['done'] % 1000 == 0 :
 				self.session.flush()
 			self.ts['done'] += 1
-		self.session.commit()
+		#self.session.commit()
 		self.ts.finish()
 		logger.debug("End load_all()")
 		
@@ -97,12 +97,18 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			self.ts['sub_done'] += 1
 			row_number += 1
 			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, row)
-			self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
+			if supplier_catalog_item_field is None:
+				logger.error("load_supplier_catalog_item_field Returned None")
+			else:
+				self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
 		#self.session.commit()
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, row):
 		#self.session.begin(subtransactions=True)
 		j = SupplierCatalogItemFieldModel.encode_json(row)
+		if j is None:
+			logger.error("Conversion to json failed")
+			return None
 		checksum = hashlib.sha1(j).hexdigest()
 		plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
 		
