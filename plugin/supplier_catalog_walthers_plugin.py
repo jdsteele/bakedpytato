@@ -220,7 +220,7 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				data['availability_indefinite'] = True
 				data['available'] = date(9999, 1, 1)
 			else:
-				m = re.match(r'^(....)(..)(..)$', str(fields['MASK_AVAILABILITY']))
+				m = re.match(r'^(....)(..)(..)$', str(fields['AVAILABILITY']))
 				if m:
 					data['availability_indefinite'] = False
 					data['available'] = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
@@ -229,13 +229,13 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 			if fields['IS_PHASED_OUT'] in ['Y', 'N']:
 				data['phased_out'] = (fields['IS_PHASED_OUT'] == 'Y')
 			else:
-				logger.error("Field MASK_IS_PHASED_OUT has unexpected value %s", fields['IS_PHASED_OUT'])
+				logger.error("Field IS_PHASED_OUT has unexpected value %s", fields['IS_PHASED_OUT'])
 
 		if 'IS_IN_STOCK' in fields and fields['IS_IN_STOCK'] is not None:
 			if fields['IS_IN_STOCK'] in ['Y', 'N']:
 				data['stock'] = (fields['IS_IN_STOCK'] == 'Y')
 			else:
-				logger.error("Field MASK_IS_IN_STOCK has unexpected value %s", fields['IS_IN_STOCK'])
+				logger.error("Field IS_IN_STOCK has unexpected value %s", fields['IS_IN_STOCK'])
 		#print fields
 		#print data
 		return data
