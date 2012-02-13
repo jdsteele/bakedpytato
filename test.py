@@ -19,6 +19,7 @@ import pstats
 
 
 #cProfile.run( 'SupplierCatalogTask().load()' , '/tmp/fooprof')
+cProfile.run( 'SupplierCatalogTask().update_all()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierSpecialTask().load_all()' , '/tmp/fooprof')
 
 
@@ -32,7 +33,7 @@ import pstats
 
 #cProfile.run( 'SupplierCatalogItemFieldTask().vacuum()', '/tmp/fooprof' )
 
-cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
+#cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
 
 #task2.update_all()
 

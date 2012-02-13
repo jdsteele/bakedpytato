@@ -106,6 +106,7 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		suppliers = query.all()
 		
 		for supplier in suppliers:
+			self.session.begin(subtransactions=True)
 			#print supplier
 			query = self.session.query(SupplierCatalogModel)
 			query = query.filter(SupplierCatalogModel.supplier_id == supplier.id)
@@ -118,6 +119,7 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				if prev_supplier_catalog is not None:
 					prev_supplier_catalog.next_supplier_catalog_id = supplier_catalog.id
 					supplier_catalog.prev_supplier_catalog_id = prev_supplier_catalog.id
+				supplier_catalog.next_supplier_catalog_id = None
 				prev_supplier_catalog = supplier_catalog
-			supplier_catalog.next_supplier_catalog_id = None
+			self.session.commit()
 		logger.debug("End sort()")
