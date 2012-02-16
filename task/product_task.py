@@ -43,29 +43,33 @@ class ProductTask(BaseTask):
 	def load_all(self):
 		"""Load All"""
 		logger.debug("Begin load_all()")
-		self.session.begin(subtransactions=True)
-		query = self.session.query(SupplierCatalogItemModel)
-		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier != None)
-		query = query.filter(SupplierCatalogItemModel.manufacturer_id != None)
-		query = query.filter(SupplierCatalogItemModel.product_identifier != None)
-		query = query.filter(SupplierCatalogItemModel.product_id == None)
-		query = query.filter(SupplierCatalogItemModel.category_id != None)
-		query = query.filter(SupplierCatalogItemModel.scale_id != None)
-		query = query.filter(SupplierCatalogItemModel.phased_out == False)
-		query = query.filter(
-			or_(
-				SupplierCatalogItemModel.in_stock == True,
-				SupplierCatalogItemModel.advanced == True
+		try:
+			self.session.begin(subtransactions=True)
+			query = self.session.query(SupplierCatalogItemModel)
+			query = query.filter(SupplierCatalogItemModel.manufacturer_identifier != None)
+			query = query.filter(SupplierCatalogItemModel.manufacturer_id != None)
+			query = query.filter(SupplierCatalogItemModel.product_identifier != None)
+			query = query.filter(SupplierCatalogItemModel.product_id == None)
+			query = query.filter(SupplierCatalogItemModel.category_id != None)
+			query = query.filter(SupplierCatalogItemModel.scale_id != None)
+			query = query.filter(SupplierCatalogItemModel.phased_out == False)
+			query = query.filter(
+				or_(
+					SupplierCatalogItemModel.in_stock == True,
+					SupplierCatalogItemModel.advanced == True
+				)
 			)
-		)
+			ts = self.term_stat('Products Load', query.count())
 
-		ts = self.term_stat('Products Load', query.count())
-
-		for supplier_catalog_item in query.yield_per(1000):
-			self.load_one(supplier_catalog_item)
-			ts['done'] += 1
-		self.session.commit()
-		ts.finish()
+			for supplier_catalog_item in query.yield_per(1000):
+				self.load_one(supplier_catalog_item)
+				ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			logger.exception("Caught Exception: ")
+			self.session.rollback()
+		finally:
+			ts.finish()
 		logger.debug("End load_all()")
 
 
@@ -90,16 +94,21 @@ class ProductTask(BaseTask):
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
-		self.session.begin(subtransactions=True)
-		query = self.session.query(ProductModel)
+		try:
+			self.session.begin(subtransactions=True)
+			query = self.session.query(ProductModel)
 
-		ts = self.term_stat('Products Update', query.count())
+			ts = self.term_stat('Products Update', query.count())
 
-		for product in query.yield_per(1000):
-			self.update_one(product)
-			ts['done'] += 1
-		self.session.commit()
-		ts.finish()
+			for product in query.yield_per(1000):
+				self.update_one(product)
+				ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			logger.exception("Caught Exception: ")
+			self.session.rollback()
+		finally:
+			ts.finish()
 		logger.debug("End update_all()")
 
 
@@ -133,46 +142,51 @@ class ProductTask(BaseTask):
 		self.session.commit()
 
 	def sort(self):
-		print "Caching Manufacturers..."
 		self.session.begin(subtransactions=True)
-		manufacturers = dict()
-		query = self.session.query(ManufacturerModel)
-		for manufacturer in query:
-			manufacturers[manufacturer.id] = manufacturer.name
+		try:
+			logger.info("Caching Manufacturers...")
+			manufacturers = dict()
+			query = self.session.query(ManufacturerModel)
+			for manufacturer in query:
+				manufacturers[manufacturer.id] = manufacturer.name
 
-		query = self.session.query(ProductModel)
-		query = query.order_by(ProductModel.sort)
-		
-		sorttable = list()
-		
-		print "Generating List..."
-		
-		for product in query:
-			data = [
-				product.id, 
-				manufacturers[product.manufacturer_id], 
-				product.identifier
-			]
-			sorttable.append(data)
-		
-		def sortkey(s):
-			return (sortutil.alphanum_key(s[1]), sortutil.alphanum_key(s[2]))
-		
-		
-		print "Sorting List..."
-		sorttable.sort(key=sortkey)
-
-		ts = self.term_stat('Products Sort', len(sorttable))
-
-		for x in xrange(len(sorttable)):
-			(product_id, a, b) = sorttable[x]
 			query = self.session.query(ProductModel)
-			query = query.filter(ProductModel.id == product_id)
-			product = query.one()
-			product.sort = x
-			ts['done'] += 1
-		self.session.commit()
-		ts.finish()
+			query = query.order_by(ProductModel.sort)
+			
+			sorttable = list()
+			
+			logger.info("Generating List...")
+			
+			for product in query:
+				data = [
+					product.id, 
+					manufacturers[product.manufacturer_id], 
+					product.identifier
+				]
+				sorttable.append(data)
+			
+			def sortkey(s):
+				return (sortutil.alphanum_key(s[1]), sortutil.alphanum_key(s[2]))
+			
+			
+			logger.info("Sorting List...")
+			sorttable.sort(key=sortkey)
+
+			ts = self.term_stat('Products Sort', len(sorttable))
+
+			for x in xrange(len(sorttable)):
+				(product_id, a, b) = sorttable[x]
+				query = self.session.query(ProductModel)
+				query = query.filter(ProductModel.id == product_id)
+				product = query.one()
+				product.sort = x
+				ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			self.session.rollback()
+			logger.exception("Caught Exception: ")
+		finally:
+			ts.finish()
 
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""

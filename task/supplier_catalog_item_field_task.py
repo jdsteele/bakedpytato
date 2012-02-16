@@ -63,17 +63,22 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		self.session.begin(subtransactions=True)
-		self.plugins = self.load_plugins()
-		query = self.session.query(SupplierCatalogItemFieldModel)
-		self.ts = self.term_stat('SupplierCatalogItemField Update All', query.count())
-		for supplier_catalog_item_field in query.yield_per(1000):
-			self.update_one(supplier_catalog_item_field)
-			if self.ts['done'] % 1000 == 0:
-				self.session.flush()
-			self.ts['done'] += 1
-		self.session.commit()
-		self.ts.finish()
-		logger.debug("End load_all()")
+		try:
+			self.plugins = self.load_plugins()
+			query = self.session.query(SupplierCatalogItemFieldModel)
+			self.ts = self.term_stat('SupplierCatalogItemField Update All', query.count())
+			for supplier_catalog_item_field in query.yield_per(1000):
+				self.update_one(supplier_catalog_item_field)
+				if self.ts['done'] % 1000 == 0:
+					self.session.flush()
+				self.ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			self.session.rollback()
+			logger.exception("Caught Exception: ")
+		finally:
+			self.ts.finish()
+		logger.debug("End update_all()")
 			
 	def update_one(self, supplier_catalog_item_field):
 		if not supplier_catalog_item_field.supplier_catalog_filter_id in self.plugins:
@@ -118,40 +123,47 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	def vacuum_all(self, rand_limit=None):
 		logger.debug('Begin vacuum_all(rand_limit=%s)', rand_limit)
 		##TODO delete SCIFields with SCFilterId not found in SCFilter
-		self.plugins = self.load_plugins()
+		
+		try:
+		
+			self.plugins = self.load_plugins()
 
-		self.session.begin()
-		
-		ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
-		
-		for plug in self.plugins.itervalues():
-			supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
-			model_name = plug.version_model()  + 'Model'
-			VersionModel = getattr(model, model_name)
-			query = self.session.query(SupplierCatalogItemFieldModel)
-			query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
+			self.session.begin()
 			
-			if rand_limit is not None:
-				c = query.count() - rand_limit
-				if c < 0:
-					c = 0
-				offset = random.randint(0, c)
-				query = query.offset(offset)
-				query = query.limit(rand_limit)
-				logger.debug("LIMIT %i, OFFSET %i, supplier_catalog_filter_id %s", rand_limit, offset, supplier_catalog_filter_id)
+			self.ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
 			
-			ts['sub_done'] = 0
-			for supplier_catalog_item_field in query.yield_per(100):
-				count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
-				if count > 0:
-					supplier_catalog_item_field.supplier_catalog_item_version_count = count
-				else:
-					logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
-					self.session.delete(supplier_catalog_item_field)
-				ts['sub_done'] += 1
-			ts['done'] += 1
-					
-		self.session.commit()
+			for plug in self.plugins.itervalues():
+				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+				model_name = plug.version_model()  + 'Model'
+				VersionModel = getattr(model, model_name)
+				query = self.session.query(SupplierCatalogItemFieldModel)
+				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
+				
+				if rand_limit is not None:
+					c = query.count() - rand_limit
+					if c < 0:
+						c = 0
+					offset = random.randint(0, c)
+					query = query.offset(offset)
+					query = query.limit(rand_limit)
+					logger.debug("LIMIT %i, OFFSET %i, supplier_catalog_filter_id %s", rand_limit, offset, supplier_catalog_filter_id)
+				
+				self.ts['sub_done'] = 0
+				for supplier_catalog_item_field in query.yield_per(100):
+					count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
+					if count > 0:
+						supplier_catalog_item_field.supplier_catalog_item_version_count = count
+					else:
+						logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
+						self.session.delete(supplier_catalog_item_field)
+					self.ts['sub_done'] += 1
+				self.ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			self.session.rollback()
+			logger.exception("Caught Exception: ")
+		finally:
+			self.ts.finish()
 		logger.debug('End vacuum()')
 
 	def vacuum_count(self, supplier_catalog_item_field, VersionModel):

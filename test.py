@@ -18,6 +18,7 @@ from uuid import UUID
 print "Testing..."
 
 #cProfile.run( 'SupplierCatalogTask().load()' , '/tmp/fooprof')
+cProfile.run( 'SupplierCatalogTask().load_all()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierCatalogTask().update()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierCatalogItemVersionTask().vacuum()', '/tmp/fooprof' )
 #cProfile.run( 'SupplierCatalogItemVersionTask().load()' , '/tmp/fooprof')
@@ -25,7 +26,7 @@ print "Testing..."
 #cProfile.run( 'SupplierCatalogItemFieldTask().vacuum()', '/tmp/fooprof' )
 #cProfile.run( 'SupplierCatalogItemFieldTask().update()', '/tmp/fooprof' )
 #cProfile.run( 'SupplierCatalogItemTask().load_all(supplier_id=UUID("4e8cfc8d-fa9c-4416-92e0-541066c1c7e4"), )' , '/tmp/fooprof')
-cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
+#cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierCatalogItemTask().update()' , '/tmp/fooprof')
 
 #cProfile.run( 'SupplierSpecialTask().load()' , '/tmp/fooprof')

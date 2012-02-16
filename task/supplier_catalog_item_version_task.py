@@ -71,17 +71,17 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 
 			self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
 			for supplier_catalog in query.yield_per(10):
-				
 				self.load_one(supplier_catalog)
 				supplier_catalog.item_versions_loaded = True
 				if self.ts['done'] % 1000 == 0 :
 					self.session.flush()
 				self.ts['done'] += 1
 			self.session.commit()
-			self.ts.finish()
-		except Exception as e:
+		except Exception:
 			self.session.rollback()
 			logger.exception('Caught Exception: ')
+		finally:
+			self.ts.finish()
 		logger.debug("End load_all()")
 		
 	def load_one(self, supplier_catalog):
@@ -102,10 +102,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			self.ts['sub_done'] += 1
 			row_number += 1
 			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, row)
-			if supplier_catalog_item_field is None:
-				logger.error("load_supplier_catalog_item_field Returned None")
-			else:
-				self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
+			self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
 		#self.session.commit()
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, row):
@@ -184,10 +181,12 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 					self.ts['done'] += 1
 					self.session.flush()
 			self.session.commit()
-			self.ts.finish()
-		except Exception as e:
+		except Exception:
 			self.session.rollback()
 			logger.exception('Caught Exception: ')
+		finally:
+			self.ts.finish()
+		
 		logger.debug("End update_all()")
 	
 	def update_from_supplier_catalog(self, supplier_catalog, VersionModel):

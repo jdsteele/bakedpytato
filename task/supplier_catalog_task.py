@@ -58,21 +58,28 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 	def load_all(self, modified_since=None):
 		"""Load All"""
 		logger.debug("Begin load_all()")
-		plugins = self.load_plugins()
-		query = self.session.query(FileImportModel)
-		if modified_since:
-			query = query.filter(FileImportModel.modified >= modified_since)
-		ts = self.term_stat('SupplierCatalog Load All', query.count())
-		for file_import in query.yield_per(1):
-			#print file_import.name
-			for plug in plugins.itervalues():
-				is_match = plug.match_file_import(file_import)
-				if is_match:
-					self.load_one(plug, file_import)
-					break
-			self.session.expunge(file_import)
-			ts['done'] += 1
-		ts.finish()
+		try:
+			self.session.begin(subtransactions=True)
+			plugins = self.load_plugins()
+			query = self.session.query(FileImportModel)
+			if modified_since:
+				query = query.filter(FileImportModel.modified >= modified_since)
+			ts = self.term_stat('SupplierCatalog Load All', query.count())
+			for file_import in query.yield_per(1):
+				#print file_import.name
+				for plug in plugins.itervalues():
+					is_match = plug.match_file_import(file_import)
+					if is_match:
+						self.load_one(plug, file_import)
+						break
+				self.session.expunge(file_import)
+				ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			self.session.rollback()
+			logger.exception("Caught Exception: ")
+		finally:
+			ts.finish()
 		logger.debug("End load_all()")
 
 
@@ -81,7 +88,7 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		query = self.session.query(SupplierCatalogModel)
 		query = query.filter(SupplierCatalogModel.file_import_id == file_import.id)
 		
-		self.session.begin()
+		self.session.begin(subtransactions=True)
 		if query.count() == 0:
 			supplier_catalog = SupplierCatalogModel()
 			self.session.add(supplier_catalog)
@@ -105,24 +112,34 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		
 	def sort(self):
 		logger.debug("Begin sort()")
-		query = self.session.query(SupplierModel)
-		suppliers = query.all()
-		
-		for supplier in suppliers:
+		try:
 			self.session.begin(subtransactions=True)
-			#print supplier
-			query = self.session.query(SupplierCatalogModel)
-			query = query.filter(SupplierCatalogModel.supplier_id == supplier.id)
-			query = query.order_by(SupplierCatalogModel.issue_date)
+			query = self.session.query(SupplierModel)
+			ts = self.term_stat('SupplierCatalog Sort', query.count())
+			suppliers = query.all()
 			
-			prev_supplier_catalog = None
-			
-			for supplier_catalog in query:
-				#print supplier_catalog
-				if prev_supplier_catalog is not None:
-					prev_supplier_catalog.next_supplier_catalog_id = supplier_catalog.id
-					supplier_catalog.prev_supplier_catalog_id = prev_supplier_catalog.id
-				supplier_catalog.next_supplier_catalog_id = None
-				prev_supplier_catalog = supplier_catalog
+			for supplier in suppliers:
+				#print supplier
+				query = self.session.query(SupplierCatalogModel)
+				query = query.filter(SupplierCatalogModel.supplier_id == supplier.id)
+				query = query.order_by(SupplierCatalogModel.issue_date)
+				
+				prev_supplier_catalog = None
+				
+				for supplier_catalog in query:
+					#print supplier_catalog
+					if prev_supplier_catalog is not None:
+						prev_supplier_catalog.next_supplier_catalog_id = supplier_catalog.id
+						supplier_catalog.prev_supplier_catalog_id = prev_supplier_catalog.id
+					supplier_catalog.next_supplier_catalog_id = None
+					prev_supplier_catalog = supplier_catalog
+					ts['sub_done'] += 1
+				ts['done'] += 1
+				ts['sub_done'] = 0
 			self.session.commit()
+		except Exception:
+			self.session.rollback()
+			logger.exception("Caught Exception: ")
+		finally:
+			ts.finish()
 		logger.debug("End sort()")
