@@ -24,7 +24,7 @@ from decimal import *
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -221,10 +221,10 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		if 'AVAILABILITY' in fields and fields['AVAILABILITY'] is not None:
 			if fields['AVAILABILITY'] < 1000000 and fields['AVAILABILITY'] > 0:
 				data['availability_indefinite'] = True
-				data['available'] = Opaque
+				data['available'] = date(9999,1,1)
 			elif fields['AVAILABILITY'] == 0:
 				data['availability_indefinite'] = False
-				data['available'] = Opaque
+				data['available'] = date(0,1,1)
 			else:
 				m = re.match(r'^(\d{4})(\d{2})(\d{2})$', str(fields['AVAILABILITY']))
 				if m:

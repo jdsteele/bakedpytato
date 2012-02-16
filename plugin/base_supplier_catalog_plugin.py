@@ -21,7 +21,7 @@ from datetime import datetime
 #Application Library
 
 #This Package
-from plugin.base_plugin import BasePlugin, Opaque
+from plugin.base_plugin import BasePlugin
 
 logger = logging.getLogger(__name__)
 

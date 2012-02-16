@@ -30,7 +30,6 @@ from model import SupplierCatalogModel
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
-from plugin.base_plugin import Opaque
 
 logger = logging.getLogger(__name__)
 

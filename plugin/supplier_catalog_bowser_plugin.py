@@ -31,7 +31,7 @@ from decimal import *
 
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
 
 logger = logging.getLogger(__name__)
 

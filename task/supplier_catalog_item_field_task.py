@@ -31,7 +31,6 @@ from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
 from priceutil import decimal_round
 
-from plugin.base_plugin import Opaque
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
