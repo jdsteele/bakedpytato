@@ -69,6 +69,8 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			return False
 		if re.search('exactrail', file_import.name):
 			return True
+		if re.search('exact_rail', file_import.name):
+			return True
 		return False
 		
 	def get_items(self, supplier_catalog):
