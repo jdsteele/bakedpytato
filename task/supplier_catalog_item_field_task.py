@@ -101,6 +101,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 
 						if field_name in ['retail']:
 							field = decimal_round(field, cfg.retail_decimals)
+					##FIXME
+					elif field is Empty:
+						field = None
 
 					setattr(supplier_catalog_item_field, field_name, field)
 				else:
