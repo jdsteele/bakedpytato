@@ -138,15 +138,16 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		query = self.session.query(VersionModel)
 		query = query.filter(VersionModel.supplier_catalog_id == supplier_catalog.id)
 		query = query.filter(VersionModel.row_number == row_number)
-		try:
-			supplier_catalog_item_version = query.one()
-		except NoResultFound:
-			supplier_catalog_item_version = VersionModel()
-			self.session.add(supplier_catalog_item_version)
 		
 		if supplier_catalog_item_field is None:
-			self.session.delete(supplier_catalog_item_version)
+			query.delete()
 		else:
+			try:
+				supplier_catalog_item_version = query.one()
+			except NoResultFound:
+				supplier_catalog_item_version = VersionModel()
+				self.session.add(supplier_catalog_item_version)
+		
 			supplier_catalog_item_version.supplier_catalog_id = supplier_catalog.id
 			supplier_catalog_item_version.supplier_catalog_item_field_id = supplier_catalog_item_field.id
 			supplier_catalog_item_version.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
