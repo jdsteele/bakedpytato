@@ -94,6 +94,9 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				supplier_catalog.issue_date = plug.issue_date(file_import)
 		self.session.commit()
 
+	def update(self):
+		self.update_all()
+
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
