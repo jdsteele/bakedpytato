@@ -7,11 +7,5 @@ class Opaque(object):
 	"""
 	pass
 
-class Empty(object):
-	"""
-	Represents a None value that is intentionally empty
-	"""
-	pass
-
 class BasePlugin(object):
 	pass

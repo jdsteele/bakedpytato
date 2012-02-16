@@ -24,7 +24,7 @@ from decimal import *
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque, Empty
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque
 
 logger = logging.getLogger(__name__)
 

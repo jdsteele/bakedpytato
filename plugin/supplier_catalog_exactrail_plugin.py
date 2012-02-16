@@ -22,7 +22,7 @@ from datetime import datetime
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Empty
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -84,12 +84,12 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 		for row in reader:
 			
 			if row is None:
-				yield Empty
+				yield None
 				continue
 			
 			if len(row) != expected_row_len:
 				logger.warning("Row has incorrect length: expected %i, got %i '%s'", expected_row_len, len(row), row)
-				yield Empty
+				yield None
 				continue
 
 			item = dict()
@@ -115,7 +115,7 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
 		if fields is None:
 			logger.warning("Fields is empty")
-			return Empty
+			return None
 
 		data = dict()
 
@@ -139,7 +139,7 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 				data['scale_identifier'] = scale
 			else:
 				logger.warning("No Prefix Found for %s", fields['UPC/SKU'])
-				data['scale_identifier'] = Empty
+				data['scale_identifier'] = None
 			
 			for category in self.categories:
 				if re.match(category, fields['DESCRIPTION']):
@@ -148,7 +148,7 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			if not defined(fields['category_identifier']):
 				data['category_identifier'] = default_category
 				logger.warning("No Category Found for %s", fields['DESCRIPTION'])
-				data['category_identifier'] = Empty
+				data['category_identifier'] = None
 
 		if fields['STOCK'] is not None:
 			if fields['STOCK'] in ['In Stock', '< 25 Call', '< 25 call', 'Pre-Order']:
@@ -156,30 +156,30 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 				data['advanced'] = (fields['STOCK'] == 'Pre-Order')
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['STOCK'])
-				data['stock'] = Empty
-				data['advanced'] = Empty
+				data['stock'] = None
+				data['advanced'] = None
 
 		if fields['MSRP'] is not None:
 			data['retail'] = Decimal(fields['MSRP'].strip('$'))
 			if data['retail'] < Decimal(0):
 				data['retail'] = Decimal(0)
 		else:
-			data['retail'] = Empty
+			data['retail'] = Decimal(0)
 
 		
 		if fields['COST'] is not None:
 			cost = Decimal(fields['DEALER'].strip('$'))
 
 			if cost < Decimal(0):
-				cost = Empty
+				cost = Decimal(0)
 
 			if 'special' in data and data['special'] == True:
 				data['special_cost'] = cost
-				data['cost'] = Empty
+				data['cost'] = Decimal(0)
 			else:
 				data['cost'] = cost
-				data['special_cost'] = Empty
+				data['special_cost'] = Decimal(0)
 		else:
-			cost = Empty
+			cost = Decimal(0)
 
 		return data

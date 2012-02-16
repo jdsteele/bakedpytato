@@ -23,7 +23,7 @@ from decimal import *
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque, Empty
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +46,12 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		
 		for row in reader:
 			if row is None:
-				yield Empty
+				yield None
 				continue
 				
 			if len(row) != expected_row_len:
 				logger.warning("Row has incorrect length: expected %i, got %i '%s'", expected_row_len, len(row), row)
-				yield Empty
+				yield None
 				continue
 
 			item = dict()
@@ -79,7 +79,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 		if fields is None:
 			logger.warning("Fields is empty")
-			return Empty
+			return None
 
 		data = dict()
 
@@ -114,23 +114,23 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		if 'PRICE' in fields and fields['PRICE'] is not None:
 			data['retail'] = Decimal(fields['PRICE'])
 			if data['retail'] < Decimal(0):
-				data['retail'] = Empty
+				data['retail'] = Decimal(0)
 		else:
-			data['retail'] = Empty
+			data['retail'] = Decimal(0)
 
 		
 		if 'COST' in fields and fields['COST'] is not None:
 			cost = Decimal(fields['COST'])
 
 			if cost < Decimal(0):
-				cost = Empty
+				cost = Decimal(0)
 
 			if 'special' in data and data['special'] == True:
 				data['special_cost'] = cost
 			else:
 				data['cost'] = cost
 		else:
-			data['cost'] = Empty
-			data['special_cost'] = Empty
+			data['cost'] = Decimal(0)
+			data['special_cost'] = Decimal(0)
 
 		return data

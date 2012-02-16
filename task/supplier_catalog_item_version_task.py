@@ -30,7 +30,7 @@ from model import SupplierCatalogModel
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
-from plugin.base_plugin import Opaque, Empty
+from plugin.base_plugin import Opaque
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +103,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			self.ts['sub_done'] += 1
 			row_number += 1
 			supplier_catalog_item_field = self.load_supplier_catalog_item_field(supplier_catalog, row)
-			if supplier_catalog_item_field is Empty:
-				self.load_supplier_catalog_item_version(supplier_catalog, Empty, row_number)
-			elif supplier_catalog_item_field is None:
+			if supplier_catalog_item_field is None:
 				logger.error("load_supplier_catalog_item_field Returned None")
 			else:
 				self.load_supplier_catalog_item_version(supplier_catalog, supplier_catalog_item_field, row_number)
@@ -116,7 +114,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		j = SupplierCatalogItemFieldModel.encode_json(row)
 		if j is None:
 			logger.error("Conversion to json failed")
-			supplier_catalog_item_field =  Empty
+			supplier_catalog_item_field = None
 		else:
 			checksum = hashlib.sha1(j).hexdigest()
 			plug = self.plugins[supplier_catalog.supplier_catalog_filter_id]
@@ -150,7 +148,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			supplier_catalog_item_version = VersionModel()
 			self.session.add(supplier_catalog_item_version)
 		
-		if supplier_catalog_item_field is Empty:
+		if supplier_catalog_item_field is None:
 			self.session.delete(supplier_catalog_item_version)
 		else:
 			supplier_catalog_item_version.supplier_catalog_id = supplier_catalog.id

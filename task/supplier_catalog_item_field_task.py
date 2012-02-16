@@ -31,7 +31,7 @@ from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
 from priceutil import decimal_round
 
-from plugin.base_plugin import Opaque, Empty
+from plugin.base_plugin import Opaque
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
@@ -79,12 +79,12 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	def update_one(self, supplier_catalog_item_field):
 		if not supplier_catalog_item_field.supplier_catalog_filter_id in self.plugins:
 			logger.warning("Plugin %s Not Found", supplier_catalog_item_field.supplier_catalog_filter_id)
-			return Empty
+			return None
 		plug = self.plugins[supplier_catalog_item_field.supplier_catalog_filter_id]
 		fields = supplier_catalog_item_field.get_fields()
 		
 		data = plug.update_fields(fields)
-		if data is not None and data is not Empty:
+		if data is not None:
 			#print "Fields:", fields
 			#print "Data:", data
 			for field_name in self.field_names:
@@ -101,21 +101,15 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 
 						if field_name in ['retail']:
 							field = decimal_round(field, cfg.retail_decimals)
-					##FIXME
-					elif field is Empty:
-						field = None
 
 					setattr(supplier_catalog_item_field, field_name, field)
 				else:
 					#logger.warning("Plugin returned empty data for %s %s", field_name, fields)
 					setattr(supplier_catalog_item_field, field_name, None)
-		elif data is Empty:
-			for field_name in self.field_names:
-				setattr(supplier_catalog_item_field, field_name, Empty)
 		else:
 			logger.warning("Plugin returned empty data %s %s %s", supplier_catalog_item_field.id, supplier_catalog_item_field.supplier_catalog_filter_id, fields)
 			for field_name in self.field_names:
-				setattr(supplier_catalog_item_field, field_name, Empty)
+				setattr(supplier_catalog_item_field, field_name, None)
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')

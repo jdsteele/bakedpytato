@@ -23,7 +23,7 @@ from decimal import *
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque, Empty
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +114,12 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 		for row in reader:
 			
 			if row is None:
-				yield Empty
+				yield None
 				continue
 			
 			if len(row) != expected_row_len:
 				logger.warning("Row has incorrect length: expected %i, got %i '%s'", expected_row_len, len(row), row)
-				yield Empty
+				yield None
 				continue
 
 			item = dict()
@@ -144,13 +144,13 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 
 		if fields is None:
 			logger.warning("Fields is empty")
-			return Empty
+			return None
 
 		data = dict()
 		
 		if 'SKU' in fields:
 			if fields['SKU'] in self.skipable:
-				return Empty
+				return None
 			m = re.match(r'^(...)(.*)$', fields['SKU'])
 			if m:
 				data['manufacturer_identifier'] = m.group(1)
