@@ -6,8 +6,7 @@ engine = create_engine(cfg.sql_url, echo=False)
 Session = sessionmaker(bind=engine, autocommit=False)
 
 def local_engine():
-	return create_engine(cfg.sql_remote_url, echo=False, strategy='threadlocal')
-
+	return create_engine(cfg.sql_local_url, echo=False, strategy='threadlocal')
 
 def remote_engine():
 	return create_engine(cfg.sql_remote_url, echo=False, strategy='threadlocal')

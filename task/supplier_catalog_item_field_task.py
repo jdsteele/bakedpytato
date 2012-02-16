@@ -18,6 +18,7 @@
 import logging 
 import re
 from decimal import *
+import random
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
@@ -29,6 +30,8 @@ from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
 from priceutil import decimal_round
+
+from plugin.base_plugin import Opaque, Empty
 
 #This Package
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
@@ -76,14 +79,12 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	def update_one(self, supplier_catalog_item_field):
 		if not supplier_catalog_item_field.supplier_catalog_filter_id in self.plugins:
 			logger.warning("Plugin %s Not Found", supplier_catalog_item_field.supplier_catalog_filter_id)
-			return None
+			return Empty
 		plug = self.plugins[supplier_catalog_item_field.supplier_catalog_filter_id]
 		fields = supplier_catalog_item_field.get_fields()
 		
-		
-		
 		data = plug.update_fields(fields)
-		if data is not None:
+		if data is not None and data is not Empty:
 			#print "Fields:", fields
 			#print "Data:", data
 			for field_name in self.field_names:
@@ -92,9 +93,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					if isinstance(field, basestring):
 						field = field.strip()
 						field = re.sub(r'\s\s+', ' ', field) #multiple spaces become single
-						
-						
-						if field_name == 'product_identifier':
+						if field_name in ['product_identifier', 'manufacturer_identifier', 'category_identifier']:
 							field = field.lstrip('0')
 					elif isinstance(field, Decimal):
 						if field_name in ['cost', 'special_cost']:
@@ -107,21 +106,27 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				else:
 					#logger.warning("Plugin returned empty data for %s %s", field_name, fields)
 					setattr(supplier_catalog_item_field, field_name, None)
+		elif data is Empty:
+			for field_name in self.field_names:
+				setattr(supplier_catalog_item_field, field_name, Empty)
 		else:
 			logger.warning("Plugin returned empty data %s %s %s", supplier_catalog_item_field.id, supplier_catalog_item_field.supplier_catalog_filter_id, fields)
 			for field_name in self.field_names:
-				setattr(supplier_catalog_item_field, field_name, None)
-
-
+				setattr(supplier_catalog_item_field, field_name, Empty)
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
+		self.vacuum_all(rand_limit=100)
+		logger.debug('End vacuum()')
+
+	def vacuum_all(self, rand_limit=None):
+		logger.debug('Begin vacuum_all(rand_limit=%s)', rand_limit)
 		##TODO delete SCIFields with SCFilterId not found in SCFilter
 		self.plugins = self.load_plugins()
 
 		self.session.begin()
 		
-		ts = self.term_stat('Vacuuming', len(self.plugins))
+		ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
 		
 		for plug in self.plugins.itervalues():
 			supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
@@ -129,14 +134,24 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			VersionModel = getattr(model, model_name)
 			query = self.session.query(SupplierCatalogItemFieldModel)
 			query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
+			
+			if rand_limit is not None:
+				c = query.count() - rand_limit
+				if c < 0:
+					c = 0
+				offset = random.randint(0, c)
+				query = query.offset(offset)
+				query = query.limit(rand_limit)
+				logger.debug("LIMIT %i, OFFSET %i, supplier_catalog_filter_id %s", rand_limit, offset, supplier_catalog_filter_id)
+			
 			ts['sub_done'] = 0
-			for supplier_catalog_item_field in query:
+			for supplier_catalog_item_field in query.yield_per(100):
 				count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
 				if count > 0:
 					supplier_catalog_item_field.supplier_catalog_item_version_count = count
 				else:
 					logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
-					#self.session.delete(supplier_catalog_item_field)
+					self.session.delete(supplier_catalog_item_field)
 				ts['sub_done'] += 1
 			ts['done'] += 1
 					
@@ -146,4 +161,6 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	def vacuum_count(self, supplier_catalog_item_field, VersionModel):
 		query = self.session.query(VersionModel)
 		query = query.filter(VersionModel.supplier_catalog_item_field_id == supplier_catalog_item_field.id)
-		return query.count()
+		count = query.count()
+		logger.debug("supplier_catalog_item_field %s, count %i", supplier_catalog_item_field.id, count)
+		return count

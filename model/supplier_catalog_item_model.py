@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
 from sqlalchemy import Column, Boolean, DateTime, ForeignKey, Numeric, Integer, String
@@ -21,6 +21,7 @@ class SupplierCatalogItemModel(BaseModel, DefaultMixin):
 	__tablename__ = 'supplier_catalog_items'
 
 	advanced = Column(Boolean, default=False)
+	available = Column(DateTime, default=None)
 	category_id = Column(Integer, ForeignKey('categories.id'))
 	category_identifier = Column(String)
 	

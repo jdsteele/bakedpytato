@@ -21,7 +21,7 @@ import uuid
 
 class SupplierCatalogItemVersionMixin(object):
 
-	#effective = Column(DateTime)
+	effective = Column(DateTime)
 	#ghost = Column(Boolean, default=False)
 	row_number = Column(Integer)
 		
@@ -51,6 +51,13 @@ class SupplierCatalogItemVersionMixin(object):
 		return relationship(
 			'SupplierCatalogItemFieldModel'
 		)
+
+	@declared_attr
+	def supplier_catalog(cls):
+		return relationship(
+			'SupplierCatalogModel'
+		)
+
 
 	#next_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))
 	#prev_supplier_catalog_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalogs.id'))

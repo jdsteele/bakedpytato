@@ -15,5 +15,6 @@
 from model.base_model import BaseModel, DefaultMixin
 from model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
 
+
 class SupplierCatalogItemBowserVersionModel(BaseModel, DefaultMixin, SupplierCatalogItemVersionMixin):
 	__tablename__ = 'supplier_catalog_item_bowser_versions'

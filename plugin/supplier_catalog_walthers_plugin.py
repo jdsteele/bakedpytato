@@ -24,7 +24,7 @@ from decimal import *
 #Application Library
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque, Empty
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,10 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 
 	def get_items(self, supplier_catalog):
 		f = tempfile.SpooledTemporaryFile(max_size=(64*1024*1024))
+		
+		if supplier_catalog.file_import.content is None:
+			return
+		
 		f.write(supplier_catalog.file_import.content)
 		
 		f_len = f.tell()
@@ -178,7 +182,6 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				data['NAME'] = st.strip(chr(0)).strip()
 			yield data
 
-
 	def issue_date(self, file_import):
 
 		m = re.match('(\d{4})(\d{2})(\d{2})', file_import.content[:8])
@@ -218,12 +221,17 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		if 'AVAILABILITY' in fields and fields['AVAILABILITY'] is not None:
 			if fields['AVAILABILITY'] < 1000000 and fields['AVAILABILITY'] > 0:
 				data['availability_indefinite'] = True
-				data['available'] = date(9999, 1, 1)
+				data['available'] = Opaque
+			elif fields['AVAILABILITY'] == 0:
+				data['availability_indefinite'] = False
+				data['available'] = Opaque
 			else:
-				m = re.match(r'^(....)(..)(..)$', str(fields['AVAILABILITY']))
+				m = re.match(r'^(\d{4})(\d{2})(\d{2})$', str(fields['AVAILABILITY']))
 				if m:
 					data['availability_indefinite'] = False
 					data['available'] = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+				else:
+					logger.error("Field AVAILABILITY has unexpected value %s", fields['AVAILABILITY'])
 					
 		if 'IS_PHASED_OUT' in fields and fields['IS_PHASED_OUT'] is not None:
 			if fields['IS_PHASED_OUT'] in ['Y', 'N']:

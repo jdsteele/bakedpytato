@@ -11,55 +11,37 @@ import cfg
 from task import *
 import cProfile
 import pstats
-
-
+from uuid import UUID
 
 #from plugin import *
 #from model import *
-
+print "Testing..."
 
 #cProfile.run( 'SupplierCatalogTask().load()' , '/tmp/fooprof')
-cProfile.run( 'SupplierCatalogTask().update_all()' , '/tmp/fooprof')
-#cProfile.run( 'SupplierSpecialTask().load_all()' , '/tmp/fooprof')
-
-
-#task.update_all()
-
-#task1 = SupplierCatalogItemVersionTask()
-#cProfile.run( 'task1.load()' , 'fooprof')
-
+#cProfile.run( 'SupplierCatalogTask().update()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierCatalogItemVersionTask().vacuum()', '/tmp/fooprof' )
-
-
+#cProfile.run( 'SupplierCatalogItemVersionTask().load()' , '/tmp/fooprof')
+#cProfile.run( 'SupplierCatalogItemVersionTask().update()' , '/tmp/fooprof')
 #cProfile.run( 'SupplierCatalogItemFieldTask().vacuum()', '/tmp/fooprof' )
+#cProfile.run( 'SupplierCatalogItemFieldTask().update()', '/tmp/fooprof' )
+#cProfile.run( 'SupplierCatalogItemTask().load_all(supplier_id=UUID("4e8cfc8d-fa9c-4416-92e0-541066c1c7e4"), )' , '/tmp/fooprof')
+cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
+#cProfile.run( 'SupplierCatalogItemTask().update()' , '/tmp/fooprof')
 
-#cProfile.run( 'SupplierCatalogItemFieldTask().update_all()', '/tmp/fooprof' )
+#cProfile.run( 'SupplierSpecialTask().load()' , '/tmp/fooprof')
 
-#task2.update_all()
+#cProfile.run('ProductTask().load()', '/tmp/fooprof')
+#cProfile.run('ProductTask().update()', '/tmp/fooprof')
+#cProfile.run('ProductTask().sort()', '/tmp/fooprof')
 
-#task1.update_all()
-
-#cProfile.run( 'SupplierCatalogItemTask().load()' , '/tmp/fooprof')
-
-#task = SupplierCatalogItemTask()
-#cProfile.run( 'task.update()' , 'fooprof')
-
-#task = ProductTask()
-#cProfile.run('task.load_all()', 'fooprof')
-#cProfile.run('task.update_all()', 'fooprof')
-#task.sort()
-
-#task = CatalogItemTask()
-#task.load_all()
+#cProfile.run('CatalogItemTask().load()', '/tmp/fooprof')
 
 #task = FinancialReportTask()
 #task.run(date(2011,10,01), date(2011,12,31))
 
-#task = SupplierCatalogItemFieldTask()
-#task.update_all()
 
-#p = pstats.Stats('/tmp/fooprof')
-#p.sort_stats('time').print_stats(40)
+p = pstats.Stats('/tmp/fooprof')
+p.sort_stats('time').print_stats(40)
 
 #from Crypto import Cipher, Random
 #from Crypto.Util import RFC1751

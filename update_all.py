@@ -19,8 +19,8 @@ from time import sleep
 
 while(True):
 
-	SupplierCatalogTask().load_all()
-	SupplierCatalogTask().update_all()
+	SupplierCatalogTask().load()
+	SupplierCatalogTask().update()
 
 	SupplierCatalogItemVersionTask().vacuum()
 	SupplierCatalogItemVersionTask().load()

@@ -12,7 +12,8 @@ executables = [
 	'update_all.py', 
 	'fixperms.py', 
 	'mirror.py',
-	'force_load_walthers_catalog.py'
+	'force_load_walthers_catalog.py',
+	'manage.py'
 ]
 
 file_owner = pwd.getpwnam('www-data')[2]

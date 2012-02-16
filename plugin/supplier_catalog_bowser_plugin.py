@@ -31,7 +31,7 @@ from decimal import *
 
 
 #This Package
-from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
+from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin, Opaque, Empty
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +75,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 				column_names = self.column_names11
 			else:
 				logger.warning("Row has incorrect length: expected 10-11, got %i '%s'", l, row)
+				yield Empty
 				continue
 				
 			item = dict()
@@ -107,7 +108,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 
 		if fields is None:
 			logger.warning("Fields is empty")
-			return None
+			return Empty
 
 		data = dict()
 

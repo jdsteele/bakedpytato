@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 
 #Standard Library
@@ -47,39 +47,46 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	field_names = {
 		'advanced':'advanced',
 		#'availability_indefinite':'availability_indefinite',
-		#'available':'available',
+		'available':'available',
 		'category_identifier':'category_identifier',
-		'cost':'cost',
+		'cost':'quantity_cost',
+		#'effective':'effective',
 		'manufacturer_identifier':'manufacturer_identifier', 
 		'name':'name',
 		'phased_out':'phased_out',
 		'product_identifier':'product_identifier',
-		'retail':'retail', 
+		'retail':'quantity_retail', 
 		'scale_identifier':'scale_identifier',
-		'special_cost':'special_cost',
+		'special_cost':'quantity_special_cost',
 		'stock':'in_stock',
 		#'to_be_announced':'to_be_announced'
 	}
 
 	defaults = {
-		'retail': Decimal(0),
+		'advanced': False,
+		#'availability_indefinite': False,
+		'available': None,
+		'category_identifier': None,
 		'cost': Decimal(0),
+		'legacy_flag': 128,
+		'name': None,
+		'phased_out': False,
+		'retail': Decimal(0),
+		'scale_identifier': None,
 		'special_cost': Decimal(0),
 		'stock': False,
-		'phased_out': False,
-		'advanced': False,
-		'legacy_flag': 128
+		#'to_be_announced': False,
 	}
 
 	def load(self):
 		"""Load"""
 		logger.debug("Begin load()")
-		self.plugins = self.load_plugins()
 		self.load_all()
 		logger.debug("End load()")
 
 	def load_all(self, supplier_id=None):
 		logger.debug("Begin load_all()")
+		self.plugins = self.load_plugins()
 		self.ts = ttystatus.TerminalStatus(period=1)
 		self.ts.add(ttystatus.Literal('SupplierCatalogItem Load  Elapsed: '))
 		self.ts.add(ttystatus.ElapsedTime())
@@ -105,11 +112,17 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.ts['supplier_total'] = len(self.plugins)
 		self.ts['supplier_done'] = 0
 		
+		filter_supplier_id = supplier_id
+		
 		for plug in self.plugins.itervalues():
 			try:
-				self.session.begin(subtransactions=True)
 				supplier_id = plug.supplier_id()
-				
+				if (
+					filter_supplier_id is not None and 
+					supplier_id != filter_supplier_id
+				):
+					continue
+				self.session.begin(subtransactions=True)
 				supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
 				if supplier_catalog is not None:
 					self.supplier_catalog_id = supplier_catalog.id
@@ -121,7 +134,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				self.session.commit()
 			except Exception as e:
 				self.session.rollback()
-				logger.critical("Caught Exception %s", e)
+				logger.exception("Caught Exception")
 			self.ts['supplier_done'] += 1
 		self.ts.finish()
 		logger.debug("End load_all()")
@@ -129,10 +142,13 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	def load_latest_supplier_catalog(self, supplier_id):
 		query = self.session.query(SupplierCatalogModel)
 		query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
-		return query.order_by(desc(SupplierCatalogModel.issue_date)).first()
+		supplier_catalog = query.order_by(desc(SupplierCatalogModel.issue_date)).first()
+		logger.debug("Latest Supplier %s, %s", supplier_id, supplier_catalog)
+		return supplier_catalog
+		
 
 	def load_supplier(self, plug, supplier_id):
-		print "Supplier", supplier_id
+		logger.debug("load_supplier %s", supplier_id)
 		query = self.session.query(SupplierCatalogItemFieldModel.manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier != None)
@@ -147,7 +163,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.ts['manufacturer_done'] += 1
 
 	def load_manufacturer(self, plug, supplier_id, manufacturer_identifier):
-		print "Manufacturer", supplier_id, manufacturer_identifier
+		logger.debug("Manufacturer %s", manufacturer_identifier)
 		query = self.session.query(SupplierCatalogItemFieldModel.product_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
@@ -159,7 +175,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		
 		for (product_identifier, ) in product_identifiers:
 			self.ts['product'] = product_identifier
-			print Supplier_id, manufacturer_identifier, product_identifier
+			#logger.debug("Supplier %s, Manufacturer %s, Product %s", supplier_id, manufacturer_identifier, product_identifier)
 			data = self.coalesce(plug, supplier_id, manufacturer_identifier, product_identifier)
 			if data is not None:
 				self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
@@ -167,9 +183,9 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def coalesce(self, plug, supplier_id, manufacturer_identifier, product_identifier):
 		model_name = plug.version_model()  + 'Model'
-		print model_name
+		#print model_name
 		VersionModel = getattr(model, model_name)
-		print VersionModel
+		#print VersionModel
 		
 		query = self.session.query(SupplierCatalogItemFieldModel.id)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
@@ -194,25 +210,34 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if data is None:
 			return None
 		
-		for (key, value) in self.defaults.iteritems():
-			if key not in data or data[key] is None:
-				data[key] = value
 		return data
 
 	def coalesce_opaque_noghost(self, VersionModel, s):
 		query = self.session.query(VersionModel)
 		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
 		query = query.order_by(desc(VersionModel.effective))
-		query = query.limit(1)
 		try:
-			supplier_catalog_item_version = query.one()
+			supplier_catalog_item_version = query.first()
 		except NoResultFound:
+			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			return None
+		if supplier_catalog_item_version is None:
 			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
 			return None
 		data = dict()
 		for field_name in self.field_names.iterkeys():
 			data[field_name] = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
 		data['supplier_catalog_id'] = supplier_catalog_item_version.supplier_catalog_id
+		
+		supplier_catalog_item_field_id = supplier_catalog_item_version.supplier_catalog_item_field_id
+		effective = supplier_catalog_item_version.effective
+		
+		for supplier_catalog_item_version in query.yield_per(5):
+			if supplier_catalog_item_version.supplier_catalog_item_field_id == supplier_catalog_item_field_id:
+				effective = supplier_catalog_item_version.effective
+			else:
+				break
+		data['effective'] = effective
 		return data
 
 	def coalesce_opaque_ghost(self, VersionModel, s, plug):
@@ -239,7 +264,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 		if count == 0:
 			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
-			return none
+			return None
 
 		data = dict()
 		first = True
@@ -248,10 +273,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			done += 1
 			if first:
 				data['supplier_catalog_id'] = supplier_catalog_item_version.supplier_catalog_id
+				data['effective'] = supplier_catalog_item_version.effective
 			complete = True
 			for field_name in self.field_names.iterkeys():
 				field = getattr(supplier_catalog_item_version.supplier_catalog_item_field, field_name)
-				if data[field_name] is None:
+				if not field_name in data or data[field_name] is None:
 					if field is None:
 						complete = False
 					else:
@@ -259,7 +285,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			if complete:
 				break
 		
-		logger.info("Complete SupplierCatalogItem was found in %i of %i Versions", done, count)
+		#logger.info("Complete SupplierCatalogItem was found in %i of %i Versions", done, count)
 				
 		return data
 
@@ -279,6 +305,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 			
 	def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
+		
+		for (key, value) in self.defaults.iteritems():
+			if key not in data or data[key] is None:
+				data[key] = value
+
 		query = self.session.query(SupplierCatalogItemModel)
 		query = query.filter(SupplierCatalogItemModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier == manufacturer_identifier)
@@ -294,20 +325,21 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.session.add(supplier_catalog_item)
 		
 		for (field_name, item_name) in self.field_names.iteritems():
-			self.compare(
-				manufacturer_identifier, 
-				product_identifier,
-				field_name,
-				data[field_name],
-				getattr(supplier_catalog_item, item_name)
-			)
+			#self.compare(
+			#	manufacturer_identifier, 
+			#	product_identifier,
+			#	field_name,
+			#	data[field_name],
+			#	getattr(supplier_catalog_item, item_name)
+			#)
 			setattr(supplier_catalog_item, item_name, data[field_name])
+		#supplier_catalog_item.effective = data['effective']
 		self.session.flush()
 
-	def compare(self, manufacturer_identifier, product_identifier, name, left, right):
+	#def compare(self, manufacturer_identifier, product_identifier, name, left, right):
 		#if left != right:
-		if True:
-			print ("\n%3s-%10s %10s %20s != %20s" % (manufacturer_identifier, product_identifier, name, left, right))
+		##if True:
+			#print ("%3s-%10s %10s %20s != %20s" % (manufacturer_identifier, product_identifier, name, left, right))
 
 
 	def update(self):
