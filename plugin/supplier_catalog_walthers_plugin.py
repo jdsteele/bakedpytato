@@ -16,7 +16,7 @@ import logging
 import re
 import struct
 import tempfile
-from datetime import date, datetime
+from datetime import date, datetime, MINYEAR, MAXYEAR
 from decimal import *
 
 #Extended Library
@@ -221,10 +221,10 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		if 'AVAILABILITY' in fields and fields['AVAILABILITY'] is not None:
 			if fields['AVAILABILITY'] < 1000000 and fields['AVAILABILITY'] > 0:
 				data['availability_indefinite'] = True
-				data['available'] = date(9999,1,1)
+				data['available'] = date(MAXYEAR,1,1)
 			elif fields['AVAILABILITY'] == 0:
 				data['availability_indefinite'] = False
-				data['available'] = date(0,1,1)
+				data['available'] = date(MINYEAR,1,1)
 			else:
 				m = re.match(r'^(\d{4})(\d{2})(\d{2})$', str(fields['AVAILABILITY']))
 				if m:

@@ -15,7 +15,7 @@
 import csv
 import logging 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, MINYEAR, MAXYEAR
 #import uuid
 from decimal import *
 
@@ -145,11 +145,17 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 					
 					if year > 2100:
 						data['availability_indefinite'] = True
+						data['available'] = date(MAXYEAR, 1, 1)
 					else:
 						data['available'] = date(year, month, day)
 						data['availability_indefinite'] = False
 				else:
 					data['availability_indefinite'] = True
+					data['available'] = date(MAXYEAR, 1, 1)
+			else:
+				data['availability_indefinite'] = None
+				data['available'] = None
+
 
 		if 'Retail' in fields and fields['Retail'] is not None:
 			m = re.match(r'\$(.*)', fields['Retail'])
