@@ -204,7 +204,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
-		self.vacuum_all(rand_limit=100)
+		self.vacuum_all(rand_limit=10000)
 		logger.debug('End vacuum()')
 		
 		

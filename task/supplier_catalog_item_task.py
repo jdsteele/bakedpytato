@@ -214,10 +214,10 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		try:
 			supplier_catalog_item_version = query.first()
 		except NoResultFound:
-			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			logger.error('No %s Found. Run SupplierCatalogItemVersionTask.vacuum() !', VersionModel.__name__)
 			return None
 		if supplier_catalog_item_version is None:
-			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			logger.error('No %s Found. Run SupplierCatalogItemVersionTask.vacuum() !', VersionModel.__name__)
 			return None
 		data = dict()
 		for field_name in self.field_names.iterkeys():
@@ -258,7 +258,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		count = query.count()
 
 		if count == 0:
-			logger.error('No %s Found. Run SupplierCatalogItemTask.vacuum() !', VersionModel.__name__)
+			logger.error('No %s Found. Run SupplierCatalogItemVersionTask.vacuum() !', VersionModel.__name__)
 			return None
 
 		data = dict()
