@@ -42,24 +42,24 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		reader = csv.reader(lines, delimiter="\t")
 		
 		column_names = reader.next()
+		
 		expected_row_len = len(column_names)
 		
 		for row in reader:
-			if row is None:
-				yield None
-				continue
-				
-			if len(row) != expected_row_len:
-				logger.warning("Row has incorrect length: expected %i, got %i '%s'", expected_row_len, len(row), row)
+			if row is None or row == []:
 				yield None
 				continue
 
 			item = dict()
 			i = 0
 			for column_name in column_names:
-				field = row[i]
-				field = field.decode('latin_1').encode('utf-8')
-				item[column_name] = field
+				if len(row) > i:
+					field = row[i]
+					field = field.decode('latin_1').encode('utf-8')
+					field = field.strip()
+					if field == '':
+						field = None
+					item[column_name] = field
 				i += 1
 			yield item
 
@@ -83,43 +83,49 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 		data = dict()
 
-		if 'VPARTNO' in fields and fields['VPARTNO'] is not None:
+		if 'VPARTNO' in fields:
 			m = re.match(r'^(...)(.+)$', fields['VPARTNO'])
 			data['manufacturer_identifier'] = m.group(1)
 			data['product_identifier'] = m.group(2)
 
-		if 'DESCRIP' in fields and fields['DESCRIP'] is not None:
+		if 'DESCRIP' in fields:
 			data['name'] = fields['DESCRIP']
 			#for removable in self.removables:
 			#	data['name'] = re.sub(removable, ' ', data['name'])
 
-		if 'SCALE' in fields and fields['SCALE'] is not None:
+		if 'SCALE' in fields:
 			data['scale_identifier'] = fields['SCALE']
 
-		if 'CATEGORY' in fields and fields['CATEGORY'] is not None:
+		if 'CATEGORY' in fields:
 			data['category_identifier'] = fields['CATEGORY']
 
-		if 'INSTOCK' in fields and fields['INSTOCK'] is not None:
-			if fields['INSTOCK'] in ['YES', 'NO']:
+		if 'INSTOCK' in fields:
+			if fields['INSTOCK'] in [None, 'YES', 'NO']:
 				data['stock'] = (fields['INSTOCK'] == 'YES')
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['INSTOCK'])
 
-		if 'ENDOFLIFE' in fields and fields['ENDOFLIFE'] is not None:
-			if fields['ENDOFLIFE'] in ['DISC']:
+		if 'ENDOFLIFE' in fields:
+			if fields['ENDOFLIFE'] in [None, 'DISC']:
 				data['phased_out'] = (fields['ENDOFLIFE'] == 'DISC')
 			else:
 				logger.error("Field ENDOFLIFE has unexpected value %s", fields['ENDOFLIFE'])
 
-		if 'PRICE' in fields and fields['PRICE'] is not None:
+		if 'PRICE' in fields:
 			data['retail'] = Decimal(fields['PRICE'])
 			if data['retail'] < Decimal(0):
 				data['retail'] = Decimal(0)
 		else:
 			data['retail'] = Decimal(0)
 
+		if 'ONSALE' in fields:
+			if fields['ONSALE'] in [None, 'Yes', 'No']:
+				data['special'] = (fields['ONSALE'] == 'Yes')
+			else:
+				logger.error("Field ONSALE has unexpected value %s", fields['ONSALE'])
+
 		
-		if 'COST' in fields and fields['COST'] is not None:
+		if 'COST' in fields:
 			cost = Decimal(fields['COST'])
 
 			if cost < Decimal(0):
@@ -127,8 +133,10 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
 			if 'special' in data and data['special'] == True:
 				data['special_cost'] = cost
+				data['cost'] = Decimal(0)
 			else:
 				data['cost'] = cost
+				data['special_cost'] = Decimal(0)
 		else:
 			data['cost'] = Decimal(0)
 			data['special_cost'] = Decimal(0)
