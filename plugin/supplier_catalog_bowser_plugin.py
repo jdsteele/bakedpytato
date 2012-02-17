@@ -41,15 +41,16 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 	column_names10 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Retail', 'Discount']
 	
 	removables = [
-		'Arbour ',
+		'Arbour',
 		'Atlas',
-		'English ',
-		'Englishs ', 
-		'English\'s ',
-		'Cal Scale ',
-		'Cary ',
-		'Selley ',
-		'Stewart ',
+		'Bowser', 
+		'Englishs', 
+		"English's",
+		'English',
+		'Cal Scale',
+		'Cary',
+		'Selley',
+		'Stewart',
 		'Walthers'
 	]
 
@@ -122,6 +123,7 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 			data['name'] = fields['Description1']
 			for removable in self.removables:
 				data['name'] = re.sub(removable, ' ', data['name'])
+			data['name'] = data['name'].lstrip()
 
 		if 'Category1' in fields and fields['Category1'] is not None:
 			data['category_identifier'] = fields['Category1']
