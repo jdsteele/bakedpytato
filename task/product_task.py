@@ -28,9 +28,9 @@ from model import InventoryItemModel
 from model import ManufacturerModel
 from model import ProductModel
 from model import SupplierCatalogItemModel
-from priceutil import decimal_psych_price
+from util.price_util import decimal_psych_price
 import cfg
-import sortutil
+from util.sort_util import alphanum_key
 
 #This Package
 from task.base_task import BaseTask
@@ -166,7 +166,7 @@ class ProductTask(BaseTask):
 				sorttable.append(data)
 			
 			def sortkey(s):
-				return (sortutil.alphanum_key(s[1]), sortutil.alphanum_key(s[2]))
+				return (alphanum_key(s[1]), alphanum_key(s[2]))
 			
 			
 			logger.info("Sorting List...")

@@ -36,7 +36,7 @@ from model import SupplierCatalogModel, SupplierCatalogItemModel, SupplierCatalo
 from model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
 
 #This Package
-import priceutil
+from util.price_util import decimal_round
 from task.setting_task import SettingTask
 from task.base_supplier_catalog_task import BaseSupplierCatalogTask
 
@@ -129,6 +129,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 					self.load_supplier(plug, supplier_id)
 				else:
 					logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_id)
+				self.session.flush()
 				self.ts['supplier_done'] += 1
 			self.session.commit()
 		except Exception:
@@ -147,6 +148,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		
 
 	def load_supplier(self, plug, supplier_id):
+		self.session.begin(subtransactions=True)
 		logger.debug("load_supplier %s", supplier_id)
 		query = self.session.query(SupplierCatalogItemFieldModel.manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
@@ -160,6 +162,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.ts['manufacturer'] = manufacturer_identifier
 			self.load_manufacturer(plug, supplier_id, manufacturer_identifier)
 			self.ts['manufacturer_done'] += 1
+			self.session.flush()
+		self.session.commit()
 
 	def load_manufacturer(self, plug, supplier_id, manufacturer_identifier):
 		logger.debug("Manufacturer %s", manufacturer_identifier)
@@ -440,17 +444,17 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item.quantity = Decimal(1)
 
 		if supplier_catalog_item.quantity_cost > 0:
-			supplier_catalog_item.cost = priceutil.decimal_round(supplier_catalog_item.quantity_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
+			supplier_catalog_item.cost = decimal_round(supplier_catalog_item.quantity_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.cost = Decimal(0)
 			
 		if supplier_catalog_item.quantity_special_cost > 0:
-			supplier_catalog_item.special_cost = priceutil.decimal_round(supplier_catalog_item.quantity_special_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
+			supplier_catalog_item.special_cost = decimal_round(supplier_catalog_item.quantity_special_cost / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.special_cost = Decimal(0)
 			
 		if supplier_catalog_item.quantity_retail > 0:
-			supplier_catalog_item.retail = priceutil.decimal_round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.cost_decimals)
+			supplier_catalog_item.retail = decimal_round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.retail = Decimal(0)
 		self.session.commit()

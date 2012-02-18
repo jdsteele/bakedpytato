@@ -29,7 +29,7 @@ import model
 from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogItemFieldModel
 #from model import SupplierCatalogModel
-from priceutil import decimal_round
+from util.price_util import decimal_round
 
 
 #This Package
