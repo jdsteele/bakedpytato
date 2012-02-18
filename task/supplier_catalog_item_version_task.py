@@ -141,6 +141,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		
 		if supplier_catalog_item_field is None:
 			query.delete()
+			supplier_catalog_item_version = None
 		else:
 			try:
 				supplier_catalog_item_version = query.one()
