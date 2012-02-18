@@ -26,14 +26,14 @@ class SupplierCatalogHeartlandPluginTestCase(unittest.TestCase):
 		self.supplier_catalog_filter = SupplierCatalogFilterModel()
 		self.plugin = SupplierCatalogHeartlandPlugin(self.supplier_catalog_filter)
 		
-	def ztest_match_file_import(self):
+	def test_match_file_import(self):
 		self.file_import.name = "blargh"
 		self.file_import.content = "blargh"
 		
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertFalse(result)
 
-		self.file_import.name = "blarghemeryblargh"
+		self.file_import.name = "blarghhwonhand-12345678901234.csv"
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertTrue(result)
 
@@ -74,16 +74,16 @@ class SupplierCatalogHeartlandPluginTestCase(unittest.TestCase):
 		results = list(self.plugin.get_items(supplier_catalog))
 		self.assertEqual(expected, results)
 
-	def ztest_issue_date(self):
+	def test_issue_date(self):
 		self.file_import.name = "blarghblargh"
 		self.file_import.effective = datetime.datetime(1976,7,4, 0, 0, 0)
 
 		result = self.plugin.issue_date(self.file_import)
 		self.assertEqual(result, self.file_import.effective)
 
-		self.file_import.name = "19770901.CSV"
+		self.file_import.name = "blarghhwonhand-12340123012345.csv"
 		result = self.plugin.issue_date(self.file_import)
-		self.assertEqual(result, datetime.datetime(1977, 9, 1, 0, 0, 0))
+		self.assertEqual(result, datetime.datetime(1234, 1, 23, 1, 23, 45))
 
 	def test_update_fields(self):
 		fieldsets = [
