@@ -15,6 +15,7 @@
 import csv
 import logging 
 import re
+import cfg
 from datetime import datetime
 from decimal import *
 
@@ -33,6 +34,8 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		if re.search('lock', file_import.name):
 			return False
 		if re.search('emery', file_import.name):
+			return True
+		if re.match(cfg.emery_user + 'xp-20\d{6}.CSV', file_import.name):
 			return True
 		return False
 		

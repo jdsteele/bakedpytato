@@ -37,6 +37,10 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertTrue(result)
 
+		self.file_import.name = "20100101.csv"
+		result = self.plugin.match_file_import(self.file_import)
+		self.assertTrue(result)
+
 	def test_get_items(self):
 		self.file_import.content = ""
 		supplier_catalog = SupplierCatalogModel()

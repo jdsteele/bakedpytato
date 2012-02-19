@@ -64,7 +64,9 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
-		if re.search(r'walthers/{1,2}CatalogUpdate[ -]\d{8}', file_import.name):
+		if re.search(r'walthers/{1,2}CatalogUpdate[ -]20\d{6}', file_import.name):
+			return True
+		if re.match(r'CatalogUpdate[ -]20\d{6}', file_import.name):
 			return True
 		return False
 

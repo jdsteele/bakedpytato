@@ -74,6 +74,8 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			return True
 		if re.search('exact_rail', file_import.name):
 			return True
+		if re.match('20\d{6}\.csv', file_import.name):
+			return True
 		return False
 		
 	def get_items(self, supplier_catalog):

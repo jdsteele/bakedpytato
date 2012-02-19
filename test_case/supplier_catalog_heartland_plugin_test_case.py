@@ -33,7 +33,11 @@ class SupplierCatalogHeartlandPluginTestCase(unittest.TestCase):
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertFalse(result)
 
-		self.file_import.name = "blarghhwonhand-12345678901234.csv"
+		self.file_import.name = "blarghhwonhand-20100101010101.csv"
+		result = self.plugin.match_file_import(self.file_import)
+		self.assertTrue(result)
+
+		self.file_import.name = "hhwonhand-20100101010101.csv"
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertTrue(result)
 

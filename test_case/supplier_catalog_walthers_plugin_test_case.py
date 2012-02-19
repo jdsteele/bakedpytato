@@ -63,7 +63,11 @@ class SupplierCatalogWalthersPluginTestCase(unittest.TestCase):
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertFalse(result)
 
-		self.file_import.name = "blarghwalthers/CatalogUpdate-12345678blargh"
+		self.file_import.name = "blarghwalthers/CatalogUpdate-20100101blargh"
+		result = self.plugin.match_file_import(self.file_import)
+		self.assertTrue(result)
+
+		self.file_import.name = "CatalogUpdate-20100101"
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertTrue(result)
 

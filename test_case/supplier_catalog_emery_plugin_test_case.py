@@ -14,6 +14,7 @@
 #Standard Library
 import unittest
 import datetime
+import cfg
 from decimal import Decimal
 from plugin.supplier_catalog_emery_plugin import SupplierCatalogEmeryPlugin
 from model import *
@@ -34,6 +35,10 @@ class SupplierCatalogEmeryPluginTestCase(unittest.TestCase):
 		self.assertFalse(result)
 
 		self.file_import.name = "blarghemeryblargh"
+		result = self.plugin.match_file_import(self.file_import)
+		self.assertTrue(result)
+
+		self.file_import.name = cfg.emery_user + "xp-20100101.CSV"
 		result = self.plugin.match_file_import(self.file_import)
 		self.assertTrue(result)
 
