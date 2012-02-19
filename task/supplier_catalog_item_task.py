@@ -115,7 +115,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		filter_supplier_id = supplier_id
 		
 		try:
-			self.session.begin(subtransactions=True)
+			#self.session.begin(subtransactions=True)
 			for plug in self.plugins.itervalues():
 				supplier_id = plug.supplier_id()
 				if (
@@ -131,7 +131,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 					logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_id)
 				self.session.flush()
 				self.ts['supplier_done'] += 1
-			self.session.commit()
+			#self.session.commit()
 		except Exception:
 			self.session.rollback()
 			logger.exception("Caught Exception: ")
@@ -153,16 +153,16 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		query = self.session.query(SupplierCatalogItemFieldModel.manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier != None)
-		manufacturer_identifiers = query.group_by(SupplierCatalogItemFieldModel.manufacturer_identifier).all()
-		self.ts['manufacturer_total'] = len(manufacturer_identifiers)
+		query = query.group_by(SupplierCatalogItemFieldModel.manufacturer_identifier)
+		self.ts['manufacturer_total'] = query.count()
 		self.ts['manufacturer_done'] = 0
 		
 		
-		for (manufacturer_identifier, ) in manufacturer_identifiers:
+		for (manufacturer_identifier, ) in query.yield_per(1000):
 			self.ts['manufacturer'] = manufacturer_identifier
 			self.load_manufacturer(plug, supplier_id, manufacturer_identifier)
-			self.ts['manufacturer_done'] += 1
 			self.session.flush()
+			self.ts['manufacturer_done'] += 1
 		self.session.commit()
 
 	def load_manufacturer(self, plug, supplier_id, manufacturer_identifier):
@@ -172,11 +172,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.product_identifier != None)
 
-		product_identifiers = query.group_by(SupplierCatalogItemFieldModel.product_identifier).all()
-		self.ts['product_total'] = len(product_identifiers)
+		query = query.group_by(SupplierCatalogItemFieldModel.product_identifier)
+		self.ts['product_total'] = query.count()
 		self.ts['product_done'] = 0
 		
-		for (product_identifier, ) in product_identifiers:
+		for (product_identifier, ) in query.yield_per(1000):
 			self.ts['product'] = product_identifier
 			#logger.debug("Supplier %s, Manufacturer %s, Product %s", supplier_id, manufacturer_identifier, product_identifier)
 			data = self.load_product(plug, supplier_id, manufacturer_identifier, product_identifier)
@@ -196,7 +196,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		query = query.filter(SupplierCatalogItemFieldModel.product_identifier == product_identifier)
 		
 		s = set()
-		for (supplier_catalog_item_field_id, ) in query.all():
+		for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
 			s.add(supplier_catalog_item_field_id)
 
 		if plug.opaque() is True:
