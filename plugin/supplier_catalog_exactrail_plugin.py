@@ -134,27 +134,23 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
 		data['manufacturer_identifier'] = '253'
 
-		if 'DESCRIPTION' in fields:
-			data['name'] = fields['DESCRIPTION']
-
-		if 'UPC/SKU' in fields:
-			data['product_identifier'] = fields['UPC/SKU']
-		if 'ROAD NAME' in fields and fields['ROAD NAME'] != 'None':
-				data['name'] = data['name'] + ' ' + fields['ROAD NAME']
-		if 'ROAD #S\'' in fields and fields['ROAD #S\''] != 'None':
-				data['name'] = data['name'] + ' ' + fields['ROAD #S\'']
-
 		data['category_identifier'] = None
-		if 'UPC/SKU' in fields:
+
+		default_category = None
+
+		if 'UPC/SKU' in fields and fields['UPC/SKU'] is not None:
+			data['product_identifier'] = fields['UPC/SKU']
 			(prefix, body) = fields['UPC/SKU'].split('-', 1)
-			default_category = None
 			if prefix in self.prefixes:
 				(scale, default_category) = self.prefixes[prefix]
 				data['scale_identifier'] = scale
 			else:
 				logger.warning("No Prefix Found for %s", fields['UPC/SKU'])
 				data['scale_identifier'] = None
-			
+
+		if 'DESCRIPTION' in fields and fields['DESCRIPTION'] is not None:
+			data['name'] = fields['DESCRIPTION']
+
 			for category in self.categories:
 				m = re.search(category, fields['DESCRIPTION'])
 				if m:
@@ -164,10 +160,24 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 				data['category_identifier'] = default_category
 				logger.warning("No Category Found for %s", fields['DESCRIPTION'])
 
+
+		if 'ROAD NAME' in fields and fields['ROAD NAME'] is not None and fields['ROAD NAME'] != 'None':
+			if 'name' in data and data['name'] is not None:
+				data['name'] = data['name'] + u' ' + fields['ROAD NAME']
+			else:
+				data['name'] = fields['ROAD NAME']
+		if 'ROAD #S\'' in fields and fields['ROAD #S\''] is not None and fields['ROAD #S\''] != 'None':
+			if 'name' in data and data['name'] is not None:
+				data['name'] = data['name'] + u' ' + fields['ROAD #S\'']
+			else:
+				data['name'] = fields['ROAD #S\'']
+
+			
+
 		if 'STOCK' in fields:
-			if fields['STOCK'] in ['OOS', 'In Stock', '< 25 Call', '< 25 call', 'Pre-Order']:
+			if fields['STOCK'] in ['OOS', 'In Stock', '< 25 Call', '< 25 call', 'Pre-Order', 'Announced']:
 				data['stock'] = (fields['STOCK'] in ['In Stock', '** NEW **'])
-				data['advanced'] = (fields['STOCK'] == 'Pre-Order')
+				data['advanced'] = (fields['STOCK'] in ['Pre-Order', 'Announced'])
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['STOCK'])
 				data['stock'] = None

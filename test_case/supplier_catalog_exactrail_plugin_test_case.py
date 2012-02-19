@@ -230,8 +230,17 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 				'MSRP': '$22.95 ',
 				"ROAD #S'": '437',
 				'ROAD NAME': ' RTIX',
-				'STOCK': 'In Stock',
+				'STOCK': 'Announced',
 				'UPC/SKU': 'EX-1401-6'
+			},
+			{
+				'DEALER': '$22.77 ',
+				'DESCRIPTION': None,
+				'MSRP': '$37.95',
+				"ROAD #S'": '2841',
+				'ROAD NAME': 'Cargill/TLDX',
+				'STOCK': 'In Stock',
+				'UPC/SKU': 'EP-80171-4'
 			},
 			None
 		]
@@ -330,9 +339,21 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 				'scale_identifier': 'HO', 
 				'special_cost': Decimal('0'), 
 				'retail': Decimal('22.95'), 
+				'advanced': True, 
+				'stock': False
+			},
+			{
+				'cost': Decimal('22.77'), 
+				'name': 'Cargill/TLDX 2841', 
+				'category_identifier': None, 
+				'manufacturer_identifier': '253', 
+				'product_identifier': 'EP-80171-4', 
+				'scale_identifier': 'HO', 
+				'special_cost': Decimal('0'), 
+				'retail': Decimal('37.95'), 
 				'advanced': False, 
 				'stock': True
-			} ,
+			},
 			None
 		]
 
