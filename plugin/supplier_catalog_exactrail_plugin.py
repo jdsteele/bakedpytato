@@ -174,16 +174,19 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
 			
 
-		if 'STOCK' in fields:
+		if 'STOCK' in fields and fields['STOCK'] is not None:
 			if fields['STOCK'] in ['OOS', 'In Stock', '< 25 Call', '< 25 call', 'Pre-Order', 'Announced']:
 				data['stock'] = (fields['STOCK'] in ['In Stock', '** NEW **'])
 				data['advanced'] = (fields['STOCK'] in ['Pre-Order', 'Announced'])
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['STOCK'])
-				data['stock'] = None
-				data['advanced'] = None
+				data['stock'] = False
+				data['advanced'] = False
+		else:
+			data['stock'] = False
+			data['advanced'] = False
 
-		if 'MSRP' in fields:
+		if 'MSRP' in fields and fields['MSRP'] is not None:
 			data['retail'] = Decimal(fields['MSRP'].strip('$'))
 			if data['retail'] < Decimal(0):
 				data['retail'] = Decimal(0)
@@ -191,7 +194,7 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			data['retail'] = Decimal(0)
 
 		
-		if 'DEALER' in fields:
+		if 'DEALER' in fields and fields['DEALER'] is not None:
 			cost = Decimal(fields['DEALER'].strip('$'))
 
 			if cost < Decimal(0):
