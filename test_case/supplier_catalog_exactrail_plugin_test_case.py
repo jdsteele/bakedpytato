@@ -152,6 +152,13 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 		result = self.plugin.issue_date(self.file_import)
 		self.assertEqual(result, datetime.datetime(1977, 9, 1, 0, 0, 0))
 
+		#pass an invalid date. 
+		#Expected result: an error is logged, and file_import.effective is returned instead.
+		self.file_import.name = "20009999.csv"
+		result = self.plugin.issue_date(self.file_import)
+		self.assertEqual(result, self.file_import.effective)
+
+
 	def test_update_fields(self):
 		fieldsets = [
 			{

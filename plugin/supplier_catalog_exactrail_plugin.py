@@ -114,7 +114,11 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
 		m = re.search('(\d{4})(\d{2})(\d{2}).csv$', file_import.name)
 		if m:
-			return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+			try:
+				d = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+				return d
+			except Exception:
+				logger.exception("Caught Exception '%s': ", file_import.name)
 
 		logger.warning("Failed to convert issue_date for %s", file_import.name)
 		return file_import.effective
