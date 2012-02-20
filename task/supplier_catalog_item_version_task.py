@@ -110,9 +110,12 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 
 	def load_supplier_catalog_item_field(self, supplier_catalog, row):
 		self.session.begin(subtransactions=True)
-		j = SupplierCatalogItemFieldModel.encode_json(row)
+		if row is not None:
+			j = SupplierCatalogItemFieldModel.encode_json(row)
+		else:
+			j = None
+
 		if j is None:
-			logger.error("Conversion to json failed")
 			supplier_catalog_item_field = None
 		else:
 			checksum = hashlib.sha1(j).hexdigest()
