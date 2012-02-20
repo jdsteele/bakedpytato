@@ -123,7 +123,7 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 		reader = csv.reader(lines, delimiter=",")
 		for row in reader:
 			
-			if row is None:
+			if row is None or row == '':
 				yield None
 				continue
 			
