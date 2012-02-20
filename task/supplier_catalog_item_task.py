@@ -113,7 +113,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.ts['supplier_done'] = 0
 		
 		filter_supplier_id = supplier_id
-		
 		try:
 			#self.session.begin(subtransactions=True)
 			for plug in self.plugins.itervalues():
@@ -130,11 +129,14 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				else:
 					logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_id)
 				self.session.flush()
+				self.session.expunge_all()
+				
 				self.ts['supplier_done'] += 1
 			#self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			self.ts.finish()
 		logger.debug("End load_all()")
@@ -162,6 +164,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.ts['manufacturer'] = manufacturer_identifier
 			self.load_manufacturer(plug, supplier_id, manufacturer_identifier)
 			self.session.flush()
+			self.session.expunge_all()
 			self.ts['manufacturer_done'] += 1
 		self.session.commit()
 
@@ -359,15 +362,16 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 			ts = self.term_stat('SupplierCatalogItem Update', query.count())
 
-			self.session.begin(subtransactions=True)
+			#self.session.begin(subtransactions=True)
 			for supplier_catalog_item in query.yield_per(1000):
 				self.update_one(supplier_catalog_item)
 				ts['done'] += 1
-			self.session.commit()
+			#self.session.commit()
 			result = True
 		except Exception as e:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End update_all()")
@@ -400,7 +404,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.session.commit()
 
 	def update_manufacturer(self, supplier_catalog_item):
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		"""Update Manufacturer"""
 		#print (
 		#	"Update Manufacturer", 
@@ -417,11 +421,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item.manufacturer_id = manufacturer_conversion.manufacturer_id
 		else:
 			supplier_catalog_item.manufacturer_id = None
-		self.session.commit()
+		#self.session.commit()
 
 
 	def update_product(self, supplier_catalog_item):
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		"""Product Conversion"""
 		if (
 			supplier_catalog_item.supplier_id is not None and
@@ -457,11 +461,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item.retail = decimal_round(supplier_catalog_item.quantity_retail / supplier_catalog_item.quantity, cfg.cost_decimals)
 		else:
 			supplier_catalog_item.retail = Decimal(0)
-		self.session.commit()
+		#self.session.commit()
 
 	def update_category(self, supplier_catalog_item):
 		"""Category Conversion"""
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		if (
 			supplier_catalog_item.supplier_id is not None and
 			supplier_catalog_item.manufacturer_id is not None and
@@ -478,12 +482,12 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				supplier_catalog_item.category_id = None
 		else:
 			supplier_catalog_item.category_id = None
-		self.session.commit()
+		#self.session.commit()
 
 
 	def update_scale(self, supplier_catalog_item):
 		"""Scale Conversion"""
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		if (
 			supplier_catalog_item.supplier_id is not None and
 			supplier_catalog_item.scale_identifier is not None
@@ -498,12 +502,12 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				supplier_catalog_item.scale_id = None
 		else:
 			supplier_catalog_item.scale_id = None
-		self.session.commit()
+		#self.session.commit()
 
 
 	def update_price_control(self, supplier_catalog_item):
 		"""Price Control"""
-		self.session.begin(subtransactions=True)
+		#self.session.begin(subtransactions=True)
 		#*** TODO handle price_control.allow_advanced
 		
 		if (
@@ -544,7 +548,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			supplier_catalog_item.sale = 0
 			supplier_catalog_item.price_control_id = None
 			supplier_catalog_item.rank = 0
-		self.session.commit()
+		#self.session.commit()
 
 
 	def get_category_conversion(self, supplier_id, manufacturer_id, category_identifier):

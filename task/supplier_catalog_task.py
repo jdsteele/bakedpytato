@@ -76,8 +76,9 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				ts['done'] += 1
 			self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End load_all()")
@@ -138,8 +139,9 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				ts['sub_done'] = 0
 			self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End sort()")

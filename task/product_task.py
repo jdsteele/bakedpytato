@@ -67,7 +67,8 @@ class ProductTask(BaseTask):
 			self.session.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			self.session.rollback()
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End load_all()")
@@ -106,7 +107,8 @@ class ProductTask(BaseTask):
 			self.session.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			self.session.rollback()
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End update_all()")
@@ -183,8 +185,9 @@ class ProductTask(BaseTask):
 				ts['done'] += 1
 			self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			ts.finish()
 

@@ -74,8 +74,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				self.ts['done'] += 1
 			self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			self.ts.finish()
 		logger.debug("End update_all()")
@@ -160,8 +161,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				self.ts['done'] += 1
 			self.session.commit()
 		except Exception:
-			self.session.rollback()
 			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
 		finally:
 			self.ts.finish()
 		logger.debug('End vacuum()')
