@@ -18,7 +18,7 @@
 import logging 
 import re
 from decimal import *
-import random
+from datetime import datetime, timedelta
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
@@ -57,20 +57,29 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	]
 
 	def update(self):
-		return self.update_all()
+		return self.update_all(limit=10000, time_limit=timedelta(hours=1))
 	
-	def update_all(self):
+	def update_all(self, limit=None, time_limit=None):
 		"""Update All"""
-		logger.debug("Begin update_all()")
+		logger.debug("Begin update_all(limit=%s)", limit)
 		self.session.begin(subtransactions=True)
+		self.ts = self.term_stat('SupplierCatalogItemField Update')
+		start_time = datetime.now()
 		try:
 			self.plugins = self.load_plugins()
 			query = self.session.query(SupplierCatalogItemFieldModel)
-			self.ts = self.term_stat('SupplierCatalogItemField Update All', query.count())
+			if limit is not None:
+				query = query.order_by(SupplierCatalogItemFieldModel.updated)
+				query = query.limit(limit)
+			self.ts['total'] = query.count()
 			for supplier_catalog_item_field in query.yield_per(1000):
 				self.update_one(supplier_catalog_item_field)
 				if self.ts['done'] % 1000 == 0:
 					self.session.flush()
+				if time_limit is not None:
+					if datetime.now() > start_time + time_limit:
+						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						break;
 				self.ts['done'] += 1
 			self.session.commit()
 		except Exception:
@@ -115,24 +124,23 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			logger.warning("Plugin returned empty data %s %s %s", supplier_catalog_item_field.id, supplier_catalog_item_field.supplier_catalog_filter_id, fields)
 			for field_name in self.field_names:
 				setattr(supplier_catalog_item_field, field_name, None)
+		supplier_catalog_item_field.updated = datetime.now()
+
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
-		self.vacuum_all(rand_limit=100)
+		self.vacuum_all(limit=1000, time_limit=timedelta(hours=1))
 		logger.debug('End vacuum()')
 
-	def vacuum_all(self, rand_limit=None):
-		logger.debug('Begin vacuum_all(rand_limit=%s)', rand_limit)
+	def vacuum_all(self, limit=None, time_limit=None):
+		logger.debug('Begin vacuum_all(limit=%s)', limit)
 		##TODO delete SCIFields with SCFilterId not found in SCFilter
-		
-		try:
-		
-			self.plugins = self.load_plugins()
 
+		self.plugins = self.load_plugins()
+		self.ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
+		now = start_time = datetime.now()
+		try:
 			self.session.begin()
-			
-			self.ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
-			
 			for plug in self.plugins.itervalues():
 				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 				model_name = plug.version_model()  + 'Model'
@@ -140,24 +148,25 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				query = self.session.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
 				
-				if rand_limit is not None:
-					c = query.count() - rand_limit
-					if c < 0:
-						c = 0
-					offset = random.randint(0, c)
-					query = query.offset(offset)
-					query = query.limit(rand_limit)
-					logger.debug("LIMIT %i, OFFSET %i, supplier_catalog_filter_id %s", rand_limit, offset, supplier_catalog_filter_id)
+				if limit is not None:
+					query = query.order_by(SupplierCatalogItemFieldModel.vacuumed)
+					query = query.limit(limit)
+					logger.debug("LIMIT %i, supplier_catalog_filter_id %s", limit, supplier_catalog_filter_id)
 				
 				self.ts['sub_done'] = 0
 				for supplier_catalog_item_field in query.yield_per(100):
 					count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
 					if count > 0:
 						supplier_catalog_item_field.supplier_catalog_item_version_count = count
+						supplier_catalog_item_field.vacuumed = now
 					else:
 						logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
 						self.session.delete(supplier_catalog_item_field)
 					self.ts['sub_done'] += 1
+					if time_limit is not None:
+						if datetime.now() > start_time + time_limit:
+							logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+							break;
 				self.ts['done'] += 1
 			self.session.commit()
 		except Exception:

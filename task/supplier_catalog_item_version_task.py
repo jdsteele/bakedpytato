@@ -17,6 +17,7 @@ import hashlib
 import logging 
 import re
 import random
+from datetime import datetime
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
@@ -45,7 +46,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 	def load(self):
 		"""Load"""
 		logger.debug("Begin load()")
-		self.load_all(limit=10, item_versions_loaded=False)
+		self.load_all(limit=10)
 		## TODO: re-load a randomly picked catalog here?
 		logger.debug("End load()")
 	
@@ -53,26 +54,27 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		"""Load All"""
 		logger.debug("Begin load_all(limit=%s, item_versions_loaded=%s)", limit, item_versions_loaded)
 		self.session.begin(subtransactions=True)
+		self.ts = self.term_stat('SupplierCatalogItemVersion Load')
+
 		try:
 			self.plugins = self.load_plugins()
 			query = self.session.query(SupplierCatalogModel)
-			query = query.order_by(desc(SupplierCatalogModel.issue_date))
-
+			query = query.order_by(
+				SupplierCatalogModel.supplier_catalog_item_versions_loaded, 
+				desc(SupplierCatalogModel.issue_date)
+			)
 			if supplier_id is not None:
 				query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
 			else:
 				query = query.filter(SupplierCatalogModel.supplier_id != None)
 
-			if item_versions_loaded is not None:
-				query = query.filter(SupplierCatalogModel.item_versions_loaded == False)
-
 			if limit is not None:
 				query = query.limit(limit)
 
-			self.ts = self.term_stat('SupplierCatalogItemVersion Load', query.count())
+			self.ts['total'] = query.count()
 			for supplier_catalog in query.yield_per(10):
 				self.load_one(supplier_catalog)
-				supplier_catalog.item_versions_loaded = True
+				supplier_catalog.supplier_catalog_item_versions_loaded = datetime.now()
 				if self.ts['done'] % 1000 == 0 :
 					self.session.flush()
 				self.ts['done'] += 1
@@ -155,7 +157,6 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			supplier_catalog_item_version.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 			supplier_catalog_item_version.row_number = row_number
 			supplier_catalog_item_version.effective = supplier_catalog.issue_date
-			supplier_catalog_item_version.ghost = False
 		self.session.commit()
 		return supplier_catalog_item_version
 
@@ -167,11 +168,12 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 	def update_all(self):
 		logger.debug("Begin update_all()")
 		self.session.begin(subtransactions=True)
+		self.ts = self.term_stat("SupplierCatalogItemVersion update")
 		try:
 			self.plugins = self.load_plugins()
 
 			query = self.session.query(SupplierCatalogModel)
-			self.ts = self.term_stat("SupplierCatalogItemVersion update", query.count())
+			self.ts['total'] = query.count()
 
 			for plug in self.plugins.itervalues():
 				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
@@ -203,17 +205,18 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		if c > 0:
 			values = dict()
 			values['effective'] = supplier_catalog.issue_date
+			values['updated'] = datetime.now()
 			query.update(values, synchronize_session=False)
 		self.session.commit()
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
-		self.vacuum_all(rand_limit=10000)
+		self.vacuum_all(limit=10000)
 		logger.debug('End vacuum()')
 		
 		
-	def vacuum_all(self, rand_limit=None):
-		logger.debug('Begin vacuum_all(rand_limit=%s)', rand_limit)
+	def vacuum_all(self, limit=None):
+		logger.debug('Begin vacuum_all(limit=%s)', limit)
 		self.plugins = self.load_plugins()
 
 		self.session.begin()
@@ -225,17 +228,12 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			model_name = plug.version_model()  + 'Model'
 			VersionModel = getattr(model, model_name)
 			query = self.session.query(VersionModel)
-			
-			if rand_limit is not None:
-				c = query.count() - rand_limit
-				if c < 0:
-					c = 0
-				offset = random.randint(0, c)
-				query = query.offset(offset)
-				query = query.limit(rand_limit)
-				logger.debug("LIMIT %i, OFFSET %i, supplier_catalog_filter_id %s", rand_limit, offset, supplier_catalog_filter_id)
+			if limit:
+				query = query.order_by(VersionModel.vacuumed)
+				query = query.limit(limit)
 
 			ts['sub_done'] = 0
+			ts['sub_total'] = query.count()
 			for supplier_catalog_item_version in query.yield_per(10):
 				count = self.vacuum_count(supplier_catalog_item_version)
 				if count == 0:
@@ -243,13 +241,13 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 					self.session.delete(supplier_catalog_item_version)
 				ts['sub_done'] += 1
 			ts['done'] += 1
-					
 		self.session.commit()
+		ts.finish()
 		logger.debug('End vacuum()')
 
 	def vacuum_count(self, supplier_catalog_item_version):
 		query = self.session.query(SupplierCatalogModel)
 		query = query.filter(SupplierCatalogModel.id == supplier_catalog_item_version.supplier_catalog_id)
 		count = query.count()
-		logger.debug("supplier_catalog_id %s, count %i", supplier_catalog_item_version.supplier_catalog_id, count)
+		#logger.debug("supplier_catalog_id %s, count %i", supplier_catalog_item_version.supplier_catalog_id, count)
 		return count

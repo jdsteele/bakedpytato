@@ -16,7 +16,7 @@
 import logging 
 import uuid
 import ttystatus
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import *
 
 #Extended Library
@@ -335,37 +335,33 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	def update(self):
 		"""Update"""
 		logger.debug("Begin update()")
-		self.update_modified()
+		self.update_all(limit=10000, time_limit=timedelta(hours=1))
 		logger.debug("End update()")
-		
-
-	def update_modified(self):
-		logger.debug("Begin update_modified()")
-		
-		start_time = datetime.now()
-		
-		modified_since = SettingTask().get(__name__, 'update.last_modified', datetime(1970,1,1))
-		logger.info("Update ModifiedSince %s", modified_since)
-		if self.update_all(modified_since):
-			SettingTask().set(__name__, 'update.last_modified', start_time)
-		logger.debug("End update_modified()")
 
 
-	def update_all(self, modified_since=None):
+	def update_all(self, modified_since=None, limit=None, time_limit=None):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		result = None
+		ts = self.term_stat('SupplierCatalogItem Update')
+		start_time = datetime.now()
 		try:
 			query = self.session.query(SupplierCatalogItemModel)
 			if modified_since:
 				query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
+			if limit:
+				query = query.order_by(SupplierCatalogItemModel.updated)
+				query = query.limit(limit)
 
-			ts = self.term_stat('SupplierCatalogItem Update', query.count())
-
+			ts['total'] = query.count()
 			#self.session.begin(subtransactions=True)
 			for supplier_catalog_item in query.yield_per(1000):
 				self.update_one(supplier_catalog_item)
 				ts['done'] += 1
+				if time_limit is not None:
+					if datetime.now() > start_time + time_limit:
+						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						break;
 			#self.session.commit()
 			result = True
 		except Exception as e:
@@ -401,6 +397,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		self.update_category(supplier_catalog_item)
 		self.update_scale(supplier_catalog_item)
 		self.update_price_control(supplier_catalog_item)
+		supplier_catalog_item.updated = datetime.now()
 		self.session.commit()
 
 	def update_manufacturer(self, supplier_catalog_item):

@@ -31,6 +31,7 @@ class SupplierCatalogModel(BaseModel, DefaultMixin):
 	supplier_catalog_field_count = Column(Integer)
 	supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
 	supplier_catalog_item_version_count = Column(Integer)
+	supplier_catalog_item_versions_loaded = Column(DateTime)
 	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 
 	file_import = relationship("FileImportModel", backref=backref('supplier_catalogs'))

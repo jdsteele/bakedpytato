@@ -47,6 +47,10 @@ class SupplierCatalogItemVersionMixin(object):
 		)
 
 	@declared_attr
+	def vacuumed(cls):
+		return Column(DateTime)
+
+	@declared_attr
 	def supplier_catalog_item_field(cls):
 		return relationship(
 			'SupplierCatalogItemFieldModel'

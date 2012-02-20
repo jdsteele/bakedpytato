@@ -126,7 +126,6 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				query = query.order_by(SupplierCatalogModel.issue_date)
 				
 				prev_supplier_catalog = None
-				
 				for supplier_catalog in query:
 					#print supplier_catalog
 					if prev_supplier_catalog is not None:

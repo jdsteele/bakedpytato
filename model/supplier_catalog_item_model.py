@@ -64,4 +64,6 @@ class SupplierCatalogItemModel(BaseModel, DefaultMixin):
 	special_cost = Column(Numeric, default=0.0)
 	"""cost per unit during special"""
 	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
+	updated = Column(DateTime, default=None)
+	vacuumed = Column(DateTime, default=None)
 

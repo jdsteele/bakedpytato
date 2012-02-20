@@ -45,6 +45,8 @@ class SupplierCatalogItemFieldModel(BaseModel, DefaultMixin):
 	supplier_catalog_item_version_count = Column(Integer, default = None)
 	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 	supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
+	updated = Column(DateTime, default=None)
+	vacuumed = Column(DateTime, default=None)
 
 	def get_fields(self):
 		if self.fields is None:
