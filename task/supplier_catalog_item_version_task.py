@@ -135,7 +135,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 				supplier_catalog_item_field = SupplierCatalogItemFieldModel()
 				self.session.add(supplier_catalog_item_field)
 		
-			supplier_catalog_item_field.fields = j
+			supplier_catalog_item_field.fields = j.encode('utf-8')
 			supplier_catalog_item_field.checksum = checksum
 			supplier_catalog_item_field.supplier_id = supplier_catalog.supplier_id
 			supplier_catalog_item_field.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
