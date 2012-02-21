@@ -59,10 +59,14 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		try:
 			self.plugins = self.load_plugins()
 			query = self.session.query(SupplierCatalogModel)
-			query = query.order_by(
-				SupplierCatalogModel.supplier_catalog_item_versions_loaded, 
-				desc(SupplierCatalogModel.issue_date)
-			)
+			alt_query = query.filter(SupplierCatalogModel.supplier_catalog_item_versions_loaded == None)
+			
+			if bquery.count() > 0:
+				query = alt_query.order_by(desc(SupplierCatalogModel.issue_date))
+			else:
+				query = query.order_by(SupplierCatalogModel.supplier_catalog_item_versions_loaded)
+			del alt_query
+
 			if supplier_id is not None:
 				query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
 			else:
