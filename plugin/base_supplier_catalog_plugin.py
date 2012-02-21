@@ -41,6 +41,7 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 		"""Subclass Me"""
 		encoding = chardet.detect(supplier_catalog.file_import.content)
 		return encoding
+
 		
 	def get_items(self, supplier_catalog):
 		"""SubClass Me"""

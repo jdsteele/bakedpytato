@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import unittest
 import datetime
@@ -49,18 +52,18 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 			self.assertIsNone(result)
 
 		c = [
-			'UPC/SKU,Description,Road Name,Road #s\',MSRP,Stock,Dealer',
-			'EE-1010-4,PC&F 6033 cu. ft. Hy-Cube Box Car,SSW,61147,$27.95 ,< 25 Call,$16.77 ',
-			'EN-50300-6,Trinity 64\' TRINCool Refrigerated Box Car : UP/ARMN : 111285,UP/ARMN,111285,$29.95 ,In Stock,$17.97 ',
-			'EP-80171-4,PS-2CD 4427 Covered Hopper,Cargill/TLDX,2841,$37.95,In Stock,$22.77 ',
-			'EPS-90053-6,B&O M-53 Wagontop Box Car,B&O,380696,$32.95 ,In Stock,$19.77 ',
-			'ET-110,"100 Ton ASF Ride Control trks 36"" fine",None,None,$9.95 ,In Stock,$5.97 ',
-			'EW-211,"33"" Brass Wheelsets fine (12-pack)",None,None,$9.95 ,In Stock,$5.97 ',
-			'EWN-301,33 Inch Brass Wheelsets (12-pack),None,None,$9.95 ,OOS,$5.97 ',
-			'EX-1401-6,FMC 4000 Gondola, RTIX,437,$22.95 ,In Stock,$13.77 ',
-			''
+			bytes('UPC/SKU,Description,Road Name,Road #s\',MSRP,Stock,Dealer'),
+			bytes('EE-1010-4,PC&F 6033 cu. ft. Hy-Cube Box Car,SSW,61147,$27.95 ,< 25 Call,$16.77 '),
+			bytes('EN-50300-6,Trinity 64\' TRINCool Refrigerated Box Car : UP/ARMN : 111285,UP/ARMN,111285,$29.95 ,In Stock,$17.97 '),
+			bytes('EP-80171-4,PS-2CD 4427 Covered Hopper,Cargill/TLDX,2841,$37.95,In Stock,$22.77 '),
+			bytes('EPS-90053-6,B&O M-53 Wagontop Box Car,B&O,380696,$32.95 ,In Stock,$19.77 '),
+			bytes('ET-110,"100 Ton ASF Ride Control trks 36"" fine",None,None,$9.95 ,In Stock,$5.97 '),
+			bytes('EW-211,"33"" Brass Wheelsets fine (12-pack)",None,None,$9.95 ,In Stock,$5.97 '),
+			bytes('EWN-301,33 Inch Brass Wheelsets (12-pack),None,None,$9.95 ,OOS,$5.97 '),
+			bytes('EX-1401-6,FMC 4000 Gondola, RTIX,437,$22.95 ,In Stock,$13.77 '),
+			bytes('')
 		]
-		self.file_import.content = "\n".join(c)
+		self.file_import.content = bytes("\n").join(c)
 		
 		expected = [
 			{
@@ -229,7 +232,7 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 				'DESCRIPTION': 'FMC 4000 Gondola',
 				'MSRP': '$22.95 ',
 				"ROAD #S'": '437',
-				'ROAD NAME': ' RTIX',
+				'ROAD NAME': 'RTIX',
 				'STOCK': 'Announced',
 				'UPC/SKU': 'EX-1401-6'
 			},
@@ -332,7 +335,7 @@ class SupplierCatalogExactrailPluginTestCase(unittest.TestCase):
 			},
 			{
 				'cost': Decimal('13.77'), 
-				'name': 'FMC 4000 Gondola  RTIX 437', 
+				'name': 'FMC 4000 Gondola RTIX 437', 
 				'category_identifier': 'FMC 4000 Gondola', 
 				'manufacturer_identifier': '253', 
 				'product_identifier': 'EX-1401-6', 

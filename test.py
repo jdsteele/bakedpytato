@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 	BakedPotato — Inventory Management System
@@ -12,6 +12,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 import cfg
 import unittest
 import test_case

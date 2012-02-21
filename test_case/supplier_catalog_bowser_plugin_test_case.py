@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import unittest
 import datetime
@@ -21,7 +24,7 @@ from model import *
 class SupplierCatalogBowserPluginTestCase(unittest.TestCase):
 	
 	def setUp(self):
-		
+		self.maxDiff = None
 		self.file_import = FileImportModel()
 		self.supplier_catalog_filter = SupplierCatalogFilterModel()
 		self.plugin = SupplierCatalogBowserPlugin(self.supplier_catalog_filter)
@@ -49,13 +52,16 @@ class SupplierCatalogBowserPluginTestCase(unittest.TestCase):
 		for result in self.plugin.get_items(supplier_catalog):
 			self.assertIsNone(result)
 
-		self.file_import.content = (
-			"manufacturer	item	description1	price1	category--1	category--2	category--3	stock	description2	retail	discount\n"+
-			"1	2	Bowser Widget 2	9.99	category--1	category--2	category--3	50	description2	$18.99	40\n"+
-			"1	3	Bowser Widget 3	9.99	category--1	category--2	category--3	0	description2	$18.99	40\n"
-			"1	4	Bowser Widget 4	9.99	category--1	category--2	category--3	-10000	description2	$18.99	40\n"
-			"1	5	Bowser Widget 5 Due 7/4/1976	9.99	category--1	category--2	category--3	-10000	7/4/1976	$18.99	40\n"
-		)
+		c = [
+			bytes("manufacturer	item	description1	price1	category--1	category--2	category--3	stock	description2	retail	discount"), 
+			bytes("1	2	Bowser Widget 2	9.99	category--1	category--2	category--3	50	description2	$18.99	40"), 
+			bytes("1	3	Bowser Widget 3	9.99	category--1	category--2	category--3	0	description2	$18.99	40"), 
+			bytes("1	4	Bowser Widget 4	9.99	category--1	category--2	category--3	-10000	description2	$18.99	40"),
+			bytes("1	5	Bowser Widget 5 Due 7/4/1976	9.99	category--1	category--2	category--3	-10000	7/4/1976	$18.99	40"),
+			bytes('')
+		]
+		
+		self.file_import.content = bytes("\n").join(c)
 		
 		expected = [
 			{'Category1': 'category--1', 'Category3': 'category--3', 'Category2': 'category--2', 'Retail': 'retail', 'Discount': 'discount', 'Item': 'item', 'Description2': 'description2', 'Description1': 'description1', 'Price1': 'price1', 'Stock': 'stock', 'Manufacturer': 'manufacturer'},

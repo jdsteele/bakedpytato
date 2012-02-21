@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import logging 
 import re
@@ -61,7 +64,7 @@ AVAILABILITY_INDEFINITE = 999999
 
 class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 	
-	default_encoding = 'ascii'
+	default_encoding = 'ISO-8859-2'
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -98,27 +101,27 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 			
 			#print f.tell(), "OF", f_len
 			
-			mask = struct.unpack('<L', f.read(4))[0]
+			mask = struct.unpack(bytes('<L'), f.read(4))[0]
 		
 			if mask & MASK_PRICE_RETAIL:
 				#Little Endian Unsigned Long
-				data['PRICE_RETAIL'] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_RETAIL'] = struct.unpack(bytes('<L'), f.read(4))[0]
 		
 			if mask & MASK_PRICE_DEALER:
 				#Little Endian Unsigned Long
-				data['PRICE_DEALER'] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_DEALER'] = struct.unpack(bytes('<L'), f.read(4))[0]
 		
 			if mask & MASK_PRICE_BOX:
 				#Little Endian Unsigned Long
-				data['PRICE_BOX'] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_BOX'] = struct.unpack(bytes('<L'), f.read(4))[0]
 		
 			if mask & MASK_PRICE_CASE:
 				#Little Endian Unsigned Long
-				data['PRICE_CASE'] = struct.unpack('<L', f.read(4))[0]
+				data['PRICE_CASE'] = struct.unpack(bytes('<L'), f.read(4))[0]
 			
 			if mask & MASK_AVAILABILITY:
 				#Little Endian Unsigned Long
-				data['AVAILABILITY'] = struct.unpack('<L', f.read(4))[0]
+				data['AVAILABILITY'] = struct.unpack(bytes('<L'), f.read(4))[0]
 
 			if mask & MASK_IS_PHASED_OUT:
 				#char
@@ -142,15 +145,15 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				
 			if mask & MASK_QTY_BOX:
 				#Little Endian Unsigned Short
-				data['QTY_BOX'] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_BOX'] = struct.unpack(bytes('<H'), f.read(2))[0]
 				
 			if mask & MASK_QTY_CASE:
 				#Little Endian Unsigned Short
-				data['QTY_CASE'] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_CASE'] = struct.unpack(bytes('<H'), f.read(2))[0]
 				
 			if mask & MASK_QTY_MINIMUM:
 				#Little Endian Unsigned Short
-				data['QTY_MINIMUM'] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_MINIMUM'] = struct.unpack(bytes('<H'), f.read(2))[0]
 				
 			if mask & MASK_CATEGORY:
 				#char * 3
@@ -162,7 +165,7 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				
 			if mask & MASK_CATALOG_PAGE:
 				#Little Endian Unsigned Short
-				data['CATALOG_PAGE'] = struct.unpack('<H', f.read(2))[0]
+				data['CATALOG_PAGE'] = struct.unpack(bytes('<H'), f.read(2))[0]
 
 			if mask & MASK_CATALOG:
 				#char * 11
@@ -170,23 +173,22 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 
 			if mask & MASK_QTY_2:
 				#Little Endian Unsigned Short
-				data['QTY_2'] = struct.unpack('<H', f.read(2))[0]
+				data['QTY_2'] = struct.unpack(bytes('<H'), f.read(2))[0]
 
 			if mask & MASK_QTY_4:
 				#Little Endian Unsigned Short
-				data['QTY_4'] = struct.unpack('<L', f.read(4))[0]
+				data['QTY_4'] = struct.unpack(bytes('<L'), f.read(4))[0]
 
 			if mask & MASK_NAME:
 				#NULL Terminated String
-				st = str()
-				s = str()
+				st = bytes()
+				s = bytes()
 				while (s != chr(0)):
 					s = f.read(1)
 					st = st + s
-				name = st.strip(chr(0)).strip()
-				if raw_encoding is False:
-					name = name.decode(self.default_encoding).encode('utf-8')
-				data['NAME'] = name
+				data['NAME'] = st.strip(chr(0)).strip()
+			if raw_encoding is False:
+				data = self.recode(data)
 			yield data
 
 	def get_encoding(self, supplier_catalog):
@@ -194,7 +196,7 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 		detector = UniversalDetector()
 		for data in self.get_items(supplier_catalog, raw_encoding=True):
 			if 'NAME' in data:
-				detector.feed(data['NAME'] + "\n")
+				detector.feed(data['NAME'])
 			if detector.done: break
 		detector.close()
 		encoding = detector.result
@@ -264,5 +266,6 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				logger.error("Field IS_IN_STOCK has unexpected value %s", fields['IS_IN_STOCK'])
 		#print fields
 		#print data
+
 		return data
 

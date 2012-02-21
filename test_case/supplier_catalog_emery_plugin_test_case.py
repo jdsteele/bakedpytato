@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import unittest
 import datetime
@@ -50,11 +53,11 @@ class SupplierCatalogEmeryPluginTestCase(unittest.TestCase):
 			self.assertIsNone(result)
 
 		c = [
-			'VPARTNO	DESCRIP	SCALE	CATEGORY	PRICE	COST	INSTOCK	ENDOFLIFE	ONSALE	DITEM	_NullFlags',
-			'"AFX1012"	"Track Clip/10pk"	""	"Toy Slot Cars"	        9.50000	        5.13000	""	""	"No"	"http://www.emerydistributors.com/Images/ProductImages/1071012.jpg"',
-			'"ATL20000357"	"HO 89\'Flat Erie Western #250051"	"1/87"	"Toy Trains HO Scale"	       35.95000	       14.38000	"YES"	""	"Yes"	"http://www.emerydistributors.com/Images/ProductImages/15020000357.jpg"',
-			'"ATL20000426"	"HO 25,500g Tank Car PLMX #25133"	"1/87"	"Toy Trains HO Scale"	       29.95000	       16.18000	""	"DISC"	"No"	"http://www.emerydistributors.com/Images/ProductImages/15020000426.jpg"',
-			''
+			bytes('VPARTNO	DESCRIP	SCALE	CATEGORY	PRICE	COST	INSTOCK	ENDOFLIFE	ONSALE	DITEM	_NullFlags'),
+			bytes('"AFX1012"	"Track Clip/10pk"	""	"Toy Slot Cars"	        9.50000	        5.13000	""	""	"No"	"http://www.emerydistributors.com/Images/ProductImages/1071012.jpg"'),
+			bytes('"ATL20000357"	"HO 89\'Flat Erie Western #250051"	"1/87"	"Toy Trains HO Scale"	       35.95000	       14.38000	"YES"	""	"Yes"	"http://www.emerydistributors.com/Images/ProductImages/15020000357.jpg"'),
+			bytes('"ATL20000426"	"HO 25,500g Tank Car PLMX #25133"	"1/87"	"Toy Trains HO Scale"	       29.95000	       16.18000	""	"DISC"	"No"	"http://www.emerydistributors.com/Images/ProductImages/15020000426.jpg"'),
+			bytes('')
 		]
 		self.file_import.content = "\n".join(c)
 		

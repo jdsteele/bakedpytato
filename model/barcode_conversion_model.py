@@ -9,8 +9,10 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
 
 from sqlalchemy import Column, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID

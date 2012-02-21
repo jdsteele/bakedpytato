@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import csv
 import logging 
@@ -43,8 +46,8 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		
 	def get_items(self, supplier_catalog):
 		content = supplier_catalog.file_import.content
-		lines = re.split("\n", content)
-		reader = csv.reader(lines, delimiter="\t")
+		lines = re.split(bytes("\n"), content)
+		reader = csv.reader(lines, delimiter=bytes("\t"))
 		
 		column_names = reader.next()
 		
@@ -60,12 +63,12 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 			for column_name in column_names:
 				if len(row) > i:
 					field = row[i]
-					field = field.decode(self.default_encoding).encode('utf-8')
 					field = field.strip()
 					if field == '':
 						field = None
 					item[column_name] = field
 				i += 1
+			item = self.recode(item)
 			yield item
 
 	def issue_date(self, file_import):
@@ -145,5 +148,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 		else:
 			data['cost'] = Decimal(0)
 			data['special_cost'] = Decimal(0)
+
+		data = self.recode(data)
 
 		return data

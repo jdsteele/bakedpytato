@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import logging 
 import uuid
@@ -112,7 +115,7 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		self.sort()
-		self.update_encoding()
+		#self.update_encoding()
 		logger.debug("End update_all()")
 		
 	def update_encoding(self):
@@ -131,7 +134,8 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 				if supplier_catalog.encoding is None:
 					plug = plugins[supplier_catalog.supplier_catalog_filter_id]
 					encoding = plug.get_encoding(supplier_catalog)
-					print supplier_catalog.file_import.name, encoding
+					if encoding is None:
+						encoding = plug.default_encoding
 					supplier_catalog.encoding = encoding['encoding']
 				self.session.expunge(supplier_catalog.file_import)
 			ts['done'] += 1

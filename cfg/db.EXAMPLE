@@ -1,3 +1,6 @@
+#Pragma
+from __future__ import unicode_literals
+
 import logging
 import logging.handlers
 
@@ -7,6 +10,7 @@ sql_remote_url = 'dialect+driver://username:password@host:port/database'
 
 cost_decimals = 4
 sale_decimals = 2
+retail_decimals = 2
 
 # create logger
 logger = logging.getLogger()
@@ -35,3 +39,6 @@ ch.setFormatter(formatter)
 # add the handlers to the logger
 logger.addHandler(fh)
 logger.addHandler(ch)
+
+#emery plugin
+emery_user = 'username'

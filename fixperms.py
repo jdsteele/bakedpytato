@@ -1,4 +1,6 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python
+#Pragma
+from __future__ import unicode_literals
 
 import os
 import pwd

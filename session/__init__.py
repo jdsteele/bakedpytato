@@ -1,3 +1,6 @@
+#Pragma
+from __future__ import unicode_literals
+
 import cfg
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

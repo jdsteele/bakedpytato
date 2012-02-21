@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import unittest
 import datetime
@@ -49,10 +52,10 @@ class SupplierCatalogHeartlandPluginTestCase(unittest.TestCase):
 			self.assertIsNone(result)
 
 		c = [
-			'"AAC41821C      ","SCULPTAMOLD 3LB. BAG     ",7.49     ',
-			'"KAD11          ","# HO NO 5 BULK PACK 20PR ",27.95    ',
-			'"KAD804         ","O COUPLER/GEAR BOX, PLAST",4.20     ',
-			''
+			str('"AAC41821C      ","SCULPTAMOLD 3LB. BAG     ",7.49     '),
+			str('"KAD11          ","# HO NO 5 BULK PACK 20PR ",27.95    '),
+			str('"KAD804         ","O COUPLER/GEAR BOX, PLAST",4.20     '),
+			str('')
 		]
 		self.file_import.content = "\n".join(c)
 		

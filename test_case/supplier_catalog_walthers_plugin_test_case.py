@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import unittest
 import datetime
@@ -79,15 +82,15 @@ class SupplierCatalogWalthersPluginTestCase(unittest.TestCase):
 			self.assertIsNone(result)
 
 		c = [
-			'19770901',
-			'   1', '1         ', struct.pack('<LL', MASK_PRICE_RETAIL, 100),
-			'   1', '2         ', struct.pack('<LL', MASK_PRICE_DEALER, 100),
-			'   1', '3         ', struct.pack('<LL', MASK_AVAILABILITY, 19770901),
-			'   1', '4         ', struct.pack('<Lc', MASK_IS_PHASED_OUT, 'Y'),
-			'   1', '5         ', struct.pack('<Lc', MASK_IS_IN_STOCK, 'Y'),
-			'   1', '6         ', struct.pack('<L', MASK_SCALE), 'H   ',
-			'   1', '7         ', struct.pack('<L', MASK_CATEGORY), '1  ',
-			'   1', '8         ', struct.pack('<L', MASK_NAME), "blargh\x00",
+			bytes('19770901'),
+			bytes('   1'), bytes('1         '), struct.pack(b'<LL', MASK_PRICE_RETAIL, 100),
+			bytes('   1'), bytes('2         '), struct.pack(b'<LL', MASK_PRICE_DEALER, 100),
+			bytes('   1'), bytes('3         '), struct.pack(b'<LL', MASK_AVAILABILITY, 19770901),
+			bytes('   1'), bytes('4         '), struct.pack(b'<Lc', MASK_IS_PHASED_OUT, bytes('Y')),
+			bytes('   1'), bytes('5         '), struct.pack(b'<Lc', MASK_IS_IN_STOCK, bytes('Y')),
+			bytes('   1'), bytes('6         '), struct.pack(b'<L', MASK_SCALE), bytes('H   '),
+			bytes('   1'), bytes('7         '), struct.pack(b'<L', MASK_CATEGORY), bytes('1  '),
+			bytes('   1'), bytes('8         '), struct.pack(b'<L', MASK_NAME), bytes("blargh\x00"),
 		]
 
 		expected = [
@@ -101,7 +104,7 @@ class SupplierCatalogWalthersPluginTestCase(unittest.TestCase):
 			{'MANUFACTURER': '1', 'PRODUCT': '8', 'NAME': 'blargh'},
 		]
 
-		self.file_import.content = str.join('', c)
+		self.file_import.content = str.join(bytes(), c)
 		
 		results = list(self.plugin.get_items(supplier_catalog))
 		self.assertEqual(expected, results)

@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import csv
 import logging 
@@ -122,7 +125,7 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 		expected_row_len = len(self.column_names)
 		content = supplier_catalog.file_import.content
 		lines = re.split("\n", content)
-		reader = csv.reader(lines, delimiter=",")
+		reader = csv.reader(lines, delimiter=bytes(','))
 		for row in reader:
 			
 			if row is None or row == []:
@@ -138,10 +141,10 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 			i = 0
 			for column_name in self.column_names:
 				field = row[i]
-				field = field.decode(self.default_encoding).encode('utf-8')
 				field = field.strip()
 				item[column_name] = field
 				i += 1
+			item = self.recode(item)
 			yield item
 		
 	def issue_date(self, file_import):
@@ -203,5 +206,4 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 
 			ratio = (Decimal('100') - Decimal(discount)) / Decimal('100')
 			data['cost'] = data['retail'] * ratio
-
 		return data

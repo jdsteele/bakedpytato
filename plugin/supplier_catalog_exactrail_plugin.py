@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import csv
 import logging 
@@ -29,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
+	default_encoding = 'ascii'
 
 	prefixes = {
 		'EN':['N', 'Freight Rolling Stock'],
@@ -80,12 +84,12 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 		
 	def get_items(self, supplier_catalog):
 		content = supplier_catalog.file_import.content
-		lines = re.split("\n", content)
-		reader = csv.reader(lines, delimiter=",")
+		lines = re.split(bytes("\n"), content)
+		reader = csv.reader(lines, delimiter=bytes(','))
 		
 		column_names = reader.next()
 		for i in xrange(len(column_names)):
-			column_names[i] = column_names[i].upper()
+			column_names[i] = unicode(column_names[i].upper())
 		
 		expected_row_len = len(column_names)
 		
@@ -105,9 +109,9 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			for column_name in column_names:
 				#print "C", column_name
 				field = row[i]
-				field = field.decode('latin_1').encode('utf-8')
 				item[column_name] = field
 				i += 1
+			item = self.recode(item)
 			yield item
 
 	def issue_date(self, file_import):
@@ -163,12 +167,12 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
 		if 'ROAD NAME' in fields and fields['ROAD NAME'] is not None and fields['ROAD NAME'] != 'None':
 			if 'name' in data and data['name'] is not None:
-				data['name'] = data['name'] + u' ' + fields['ROAD NAME']
+				data['name'] = data['name'] + ' ' + fields['ROAD NAME']
 			else:
 				data['name'] = fields['ROAD NAME']
 		if 'ROAD #S\'' in fields and fields['ROAD #S\''] is not None and fields['ROAD #S\''] != 'None':
 			if 'name' in data and data['name'] is not None:
-				data['name'] = data['name'] + u' ' + fields['ROAD #S\'']
+				data['name'] = data['name'] + ' ' + fields['ROAD #S\'']
 			else:
 				data['name'] = fields['ROAD #S\'']
 
@@ -208,5 +212,4 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 				data['special_cost'] = Decimal(0)
 		else:
 			cost = Decimal(0)
-
 		return data

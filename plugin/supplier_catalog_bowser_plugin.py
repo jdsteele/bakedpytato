@@ -11,6 +11,9 @@
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
 	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
+#Pragma
+from __future__ import unicode_literals
+
 #Standard Library
 import csv
 import logging 
@@ -20,6 +23,7 @@ from datetime import date, datetime, MINYEAR, MAXYEAR
 from decimal import *
 
 #Extended Library
+import chardet
 #from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 #import ttystatus
 
@@ -66,10 +70,16 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 			return True
 		return False
 
+	def get_encoding(self, supplier_catalog):
+		"""Subclass Me"""
+		encoding = chardet.detect(supplier_catalog.file_import.content)
+		print encoding
+		return encoding
+
 	def get_items(self, supplier_catalog):
 		content = supplier_catalog.file_import.content
-		lines = re.split("\n", content)
-		reader = csv.reader(lines, delimiter="\t")
+		lines = re.split(bytes("\n"), content)
+		reader = csv.reader(lines, delimiter=bytes("\t"))
 		for row in reader:
 			l = len(row)
 			if l == 10:
@@ -85,9 +95,9 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 			i = 0
 			for column_name in column_names:
 				field = row[i]
-				field = field.decode('latin_1').encode('utf-8')
 				item[column_name] = field
 				i += 1
+			item = self.recode(item)
 			yield item
 		
 	def issue_date(self, file_import):
