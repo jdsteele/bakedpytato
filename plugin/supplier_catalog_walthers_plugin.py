@@ -20,6 +20,7 @@ from datetime import date, datetime, MINYEAR, MAXYEAR
 from decimal import *
 
 #Extended Library
+from chardet.universaldetector import UniversalDetector
 
 #Application Library
 
@@ -60,6 +61,7 @@ AVAILABILITY_INDEFINITE = 999999
 
 class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 	
+	default_encoding = 'ascii'
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -70,7 +72,7 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 			return True
 		return False
 
-	def get_items(self, supplier_catalog):
+	def get_items(self, supplier_catalog, raw_encoding=False):
 		f = tempfile.SpooledTemporaryFile(max_size=(64*1024*1024))
 		
 		if supplier_catalog.file_import.content is None:
@@ -181,8 +183,22 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 				while (s != chr(0)):
 					s = f.read(1)
 					st = st + s
-				data['NAME'] = st.strip(chr(0)).strip()
+				name = st.strip(chr(0)).strip()
+				if raw_encoding is False:
+					name = name.decode(self.default_encoding).encode('utf-8')
+				data['NAME'] = name
 			yield data
+
+	def get_encoding(self, supplier_catalog):
+		"""Subclass Me"""
+		detector = UniversalDetector()
+		for data in self.get_items(supplier_catalog, raw_encoding=True):
+			if 'NAME' in data:
+				detector.feed(data['NAME'] + "\n")
+			if detector.done: break
+		detector.close()
+		encoding = detector.result
+		return encoding
 
 	def issue_date(self, file_import):
 

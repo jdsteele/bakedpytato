@@ -17,6 +17,7 @@ import re
 from datetime import datetime
 
 #Extended Library
+import chardet
 
 #Application Library
 
@@ -35,6 +36,11 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 	def match_file_import(self, file_import):
 		"""Subclass Me"""
 		pass
+
+	def get_encoding(self, supplier_catalog):
+		"""Subclass Me"""
+		encoding = chardet.detect(supplier_catalog.file_import.content)
+		return encoding
 		
 	def get_items(self, supplier_catalog):
 		"""SubClass Me"""

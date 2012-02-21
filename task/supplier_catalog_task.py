@@ -16,9 +16,12 @@ import logging
 import uuid
 from datetime import datetime
 from decimal import *
+import chardet
+import json
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy import desc
 import ttystatus
 
 #Application Library
@@ -109,8 +112,39 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		self.sort()
+		self.update_encoding()
 		logger.debug("End update_all()")
 		
+	def update_encoding(self):
+		logger.debug("Begin update_encoding()")
+		ts = self.term_stat('SupplierCatalog UpdateEncoding')
+		plugins = self.load_plugins()
+
+		try:
+			self.session.begin(subtransactions=True)
+			query = self.session.query(SupplierCatalogModel)
+			query = query.order_by(desc(SupplierCatalogModel.created))
+			ts['total'] = query.count()
+			for supplier_catalog in query.yield_per(100):
+				if supplier_catalog.supplier_catalog_filter_id is None:
+					continue
+				if supplier_catalog.encoding is None:
+					plug = plugins[supplier_catalog.supplier_catalog_filter_id]
+					encoding = plug.get_encoding(supplier_catalog)
+					print supplier_catalog.file_import.name, encoding
+					supplier_catalog.encoding = encoding['encoding']
+				self.session.expunge(supplier_catalog.file_import)
+			ts['done'] += 1
+			self.session.commit()
+		except Exception:
+			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
+		finally:
+			ts.finish()
+		logger.debug("update_encoding()")
+
+
 	def sort(self):
 		logger.debug("Begin sort()")
 		try:

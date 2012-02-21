@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 	
+	default_encoding = 'ISO-8859-2'
+	
 	column_names11 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Description2', 'Retail', 'Discount']
 	column_names10 = ['Manufacturer', 'Item', 'Description1', 'Price1', 'Category1', 'Category2', 'Category3', 'Stock', 'Retail', 'Discount']
 	

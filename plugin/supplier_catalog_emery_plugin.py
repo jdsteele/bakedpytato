@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
+	default_encoding = 'ISO-8859-2'
+
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
@@ -58,7 +60,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 			for column_name in column_names:
 				if len(row) > i:
 					field = row[i]
-					field = field.decode('latin_1').encode('utf-8')
+					field = field.decode(self.default_encoding).encode('utf-8')
 					field = field.strip()
 					if field == '':
 						field = None

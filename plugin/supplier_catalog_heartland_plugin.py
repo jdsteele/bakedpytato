@@ -28,6 +28,8 @@ from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
 logger = logging.getLogger(__name__)
 
 class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
+
+	default_encoding = 'windows-1252'
 	
 	column_names = ['SKU', 'Name', 'Retail']
 	
@@ -136,7 +138,7 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 			i = 0
 			for column_name in self.column_names:
 				field = row[i]
-				field = field.decode('latin_1').encode('utf-8')
+				field = field.decode(self.default_encoding).encode('utf-8')
 				field = field.strip()
 				item[column_name] = field
 				i += 1

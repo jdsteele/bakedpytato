@@ -22,6 +22,8 @@ import uuid
 class SupplierCatalogModel(BaseModel, DefaultMixin):
 	__tablename__ = 'supplier_catalogs'
 
+# *** Columns
+	encoding = Column(String, default=None)
 	file_import_id = Column(UUID(as_uuid=True), ForeignKey('file_imports.id'))
 	issue_date = Column(DateTime)
 	item_versions_loaded = Column(Boolean, default=False)
@@ -34,4 +36,5 @@ class SupplierCatalogModel(BaseModel, DefaultMixin):
 	supplier_catalog_item_versions_loaded = Column(DateTime)
 	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 
+# *** Relations
 	file_import = relationship("FileImportModel", backref=backref('supplier_catalogs'))
