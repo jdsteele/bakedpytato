@@ -61,7 +61,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			query = self.session.query(SupplierCatalogModel)
 			alt_query = query.filter(SupplierCatalogModel.supplier_catalog_item_versions_loaded == None)
 			
-			if bquery.count() > 0:
+			if alt_query.count() > 0:
 				query = alt_query.order_by(desc(SupplierCatalogModel.issue_date))
 			else:
 				query = query.order_by(SupplierCatalogModel.supplier_catalog_item_versions_loaded)
