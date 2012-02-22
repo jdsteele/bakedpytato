@@ -24,6 +24,7 @@ from datetime import datetime
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import desc
+from pybloom import ScalableBloomFilter
 
 #Application Library
 import model
@@ -232,6 +233,13 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		
 		ts = self.term_stat('SupplierCatalogItemVersion Vacuum', len(self.plugins))
 		
+		#s = set()
+		s = ScalableBloomFilter()
+		query = self.session.query(SupplierCatalogModel.id)
+		for (supplier_catalog_id, ) in query.yield_per(100):
+			s.add(supplier_catalog_id)
+		
+		
 		for plug in self.plugins.itervalues():
 			supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 			model_name = plug.version_model()  + 'Model'
@@ -244,19 +252,11 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			ts['sub_done'] = 0
 			ts['sub_total'] = query.count()
 			for supplier_catalog_item_version in query.yield_per(10):
-				count = self.vacuum_count(supplier_catalog_item_version)
-				if count == 0:
+				if supplier_catalog_item_version.supplier_catalog_id not in s:
 					logger.debug("Deleting %s %s", model_name, supplier_catalog_item_version.id)
 					self.session.delete(supplier_catalog_item_version)
 				ts['sub_done'] += 1
 			ts['done'] += 1
 		self.session.commit()
 		ts.finish()
-		logger.debug('End vacuum()')
-
-	def vacuum_count(self, supplier_catalog_item_version):
-		query = self.session.query(SupplierCatalogModel)
-		query = query.filter(SupplierCatalogModel.id == supplier_catalog_item_version.supplier_catalog_id)
-		count = query.count()
-		#logger.debug("supplier_catalog_id %s, count %i", supplier_catalog_item_version.supplier_catalog_id, count)
-		return count
+		logger.debug('End vacuum_all()')

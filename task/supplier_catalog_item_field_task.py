@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 
 #Extended Library
 from sqlalchemy.orm.exc import NoResultFound
+from pybloom import ScalableBloomFilter
 
 #Application Library
 import cfg
@@ -131,7 +132,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
-		self.vacuum_all(limit=1000, time_limit=timedelta(hours=1))
+		self.vacuum_all(limit=1000000, time_limit=timedelta(hours=1))
 		logger.debug('End vacuum()')
 
 	def vacuum_all(self, limit=None, time_limit=None):
@@ -147,6 +148,13 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 				model_name = plug.version_model()  + 'Model'
 				VersionModel = getattr(model, model_name)
+				
+				#s = set()
+				s = ScalableBloomFilter()
+				query = self.session.query(VersionModel.supplier_catalog_item_field_id)
+				for (supplier_catalog_item_field_id, )  in query.yield_per(100):
+					s.add(supplier_catalog_item_field_id)
+				
 				query = self.session.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
 				
@@ -157,13 +165,14 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				
 				self.ts['sub_done'] = 0
 				for supplier_catalog_item_field in query.yield_per(100):
-					count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
-					if count > 0:
-						supplier_catalog_item_field.supplier_catalog_item_version_count = count
-						supplier_catalog_item_field.vacuumed = now
-					else:
+					#count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
+					#if count > 0:
+						#supplier_catalog_item_field.supplier_catalog_item_version_count = count
+						#supplier_catalog_item_field.vacuumed = now
+					#else:
+					if supplier_catalog_item_field.id not in s:
 						logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
-						self.session.delete(supplier_catalog_item_field)
+						#self.session.delete(supplier_catalog_item_field)
 					self.ts['sub_done'] += 1
 					if time_limit is not None:
 						if datetime.now() > start_time + time_limit:

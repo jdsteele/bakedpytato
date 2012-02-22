@@ -181,8 +181,9 @@ class ProductTask(BaseTask):
 			for x in xrange(len(sorttable)):
 				(product_id, a, b) = sorttable[x]
 				query = self.session.query(ProductModel)
-				query = query.filter(ProductModel.id == product_id)
-				product = query.one()
+				#query = query.filter(ProductModel.id == product_id)
+				#product = query.one()
+				product = query.get(product_id)
 				product.sort = x
 				ts['done'] += 1
 			self.session.commit()

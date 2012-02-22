@@ -25,6 +25,7 @@ from decimal import *
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy import asc, desc
 #from sqlalchemy.orm import in_
+from pybloom import ScalableBloomFilter
 
 #Application Library
 import cfg
@@ -178,43 +179,10 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		
 		for (product_identifier, ) in query.yield_per(1000):
 			self.ts['product'] = product_identifier
-			#logger.debug("Supplier %s, Manufacturer %s, Product %s", supplier_id, manufacturer_identifier, product_identifier)
-			#data = self.load_product(plug, supplier_id, manufacturer_identifier, product_identifier)
-			#if data is not None:
-			#self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
 			self.load_one(supplier_id, manufacturer_identifier, product_identifier)
-			#self.ts['product_done'] += 1
-
-	#def load_product(self, plug, supplier_id, manufacturer_identifier, product_identifier):
-		#model_name = plug.version_model()  + 'Model'
-		#print model_name
-		#VersionModel = getattr(model, model_name)
-		#print VersionModel
-		
-		#query = self.session.query(SupplierCatalogItemFieldModel.id)
-		#query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
-		#query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
-		#query = query.filter(SupplierCatalogItemFieldModel.product_identifier == product_identifier)
-		
-		#s = set()
-		#for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
-			#s.add(supplier_catalog_item_field_id)
-
-		#if plug.opaque() is True:
-			#if plug.ghost() is True:
-				#data = self.coalesce_opaque_ghost(VersionModel, s, plug)
-			#else:
-				#data = self.coalesce_opaque_noghost(VersionModel, s)
-		#else:
-			#if plug.ghost() is True:
-				#data = self.coalesce_translucent_ghost(VersionModel, s)
-			#else:
-				#data = self.coalesce_translucent_noghost(VersionModel, s)
-		#return data
-
+			self.ts['product_done'] += 1
 
 			
-	#def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
 	def load_one(self, supplier_id, manufacturer_identifier, product_identifier):
 		
 		#for (key, value) in self.defaults.iteritems():
@@ -256,7 +224,17 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		ts = self.term_stat('SupplierCatalogItem Update')
 		start_time = datetime.now()
 		try:
+			s = ScalableBloomFilter()
+			query = self.session.query(
+				SupplierCatalogItemFieldModel.supplier_id,
+				SupplierCatalogItemFieldModel.manufacturer_identifier,
+				SupplierCatalogItemFieldModel.product_identifier,
+			)
+			for row in query.yield_per(1000):
+				s.add(row)
+			
 			query = self.session.query(SupplierCatalogItemModel)
+
 			if modified_since:
 				query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
 			if limit:
@@ -266,6 +244,21 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			ts['total'] = query.count()
 			self.session.begin(subtransactions=True)
 			for supplier_catalog_item in query.yield_per(10000):
+				row = (
+					supplier_catalog_item.supplier_id,
+					supplier_catalog_item.manufacturer_identifier,
+					supplier_catalog_item.product_identifier,
+				)
+				if row not in s:
+					logger.info(
+						"Not found in SupplierCatalogItemFields %s %s-%s", 
+						supplier_catalog_item.supplier_id,
+						supplier_catalog_item.manufacturer_identifier,
+						supplier_catalog_item.product_identifier
+					)
+					## TODO Maybe only not do load from SCIV?
+					continue
+
 				self.update_one(supplier_catalog_item)
 				ts['done'] += 1
 				if time_limit is not None:
