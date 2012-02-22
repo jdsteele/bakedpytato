@@ -38,8 +38,10 @@ class BaseSupplierCatalogTask(BaseTask):
 		for supplier_catalog_filter in query:
 			plugin_name = supplier_catalog_filter.name + 'Plugin'
 			if plugin_name in vars(plugin):
-				PluginClass = getattr(plugin, plugin_name)
-				plugins[supplier_catalog_filter.id] = PluginClass(supplier_catalog_filter)
+				SupplierCatalogPlugin = getattr(plugin, plugin_name)
+				plug = SupplierCatalogPlugin(supplier_catalog_filter)
+				plugins[supplier_catalog_filter.id] = plug
+				plugins[supplier_catalog_filter.supplier_id] = plug
 			else:
 				logger.warning("Plugin %s Not Found", plugin_name)
 		return plugins

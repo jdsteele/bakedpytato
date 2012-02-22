@@ -79,6 +79,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		'stock': False,
 		#'to_be_announced': False,
 	}
+	
+	latest_supplier_catalog_cache = dict()
 
 	def load(self):
 		"""Load"""
@@ -124,12 +126,12 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 					supplier_id != filter_supplier_id
 				):
 					continue
-				supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
-				if supplier_catalog is not None:
-					self.supplier_catalog_id = supplier_catalog.id
-					self.load_supplier(plug, supplier_id)
-				else:
-					logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_id)
+				#latest_supplier_catalog = self.load_latest_supplier_catalog(supplier_id)
+				#if supplier_catalog is not None:
+					#self.supplier_catalog_id = supplier_catalog.id
+				self.load_supplier(plug, supplier_id)
+				#else:
+					#logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_id)
 				self.session.flush()
 				self.session.expunge_all()
 				
@@ -143,13 +145,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			self.ts.finish()
 		logger.debug("End load_all()")
 
-	def load_latest_supplier_catalog(self, supplier_id):
-		query = self.session.query(SupplierCatalogModel)
-		query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
-		supplier_catalog = query.order_by(desc(SupplierCatalogModel.issue_date)).first()
-		logger.debug("Latest Supplier %s, %s", supplier_id, supplier_catalog)
-		return supplier_catalog
-		
 
 	def load_supplier(self, plug, supplier_id):
 		self.session.begin(subtransactions=True)
@@ -184,25 +179,178 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (product_identifier, ) in query.yield_per(1000):
 			self.ts['product'] = product_identifier
 			#logger.debug("Supplier %s, Manufacturer %s, Product %s", supplier_id, manufacturer_identifier, product_identifier)
-			data = self.load_product(plug, supplier_id, manufacturer_identifier, product_identifier)
-			if data is not None:
-				self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
-			self.ts['product_done'] += 1
+			#data = self.load_product(plug, supplier_id, manufacturer_identifier, product_identifier)
+			#if data is not None:
+			#self.load_one(data, supplier_id, manufacturer_identifier, product_identifier)
+			self.load_one(supplier_id, manufacturer_identifier, product_identifier)
+			#self.ts['product_done'] += 1
 
-	def load_product(self, plug, supplier_id, manufacturer_identifier, product_identifier):
-		model_name = plug.version_model()  + 'Model'
+	#def load_product(self, plug, supplier_id, manufacturer_identifier, product_identifier):
+		#model_name = plug.version_model()  + 'Model'
 		#print model_name
-		VersionModel = getattr(model, model_name)
+		#VersionModel = getattr(model, model_name)
 		#print VersionModel
 		
-		query = self.session.query(SupplierCatalogItemFieldModel.id)
-		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
-		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
-		query = query.filter(SupplierCatalogItemFieldModel.product_identifier == product_identifier)
+		#query = self.session.query(SupplierCatalogItemFieldModel.id)
+		#query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_id)
+		#query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == manufacturer_identifier)
+		#query = query.filter(SupplierCatalogItemFieldModel.product_identifier == product_identifier)
 		
+		#s = set()
+		#for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
+			#s.add(supplier_catalog_item_field_id)
+
+		#if plug.opaque() is True:
+			#if plug.ghost() is True:
+				#data = self.coalesce_opaque_ghost(VersionModel, s, plug)
+			#else:
+				#data = self.coalesce_opaque_noghost(VersionModel, s)
+		#else:
+			#if plug.ghost() is True:
+				#data = self.coalesce_translucent_ghost(VersionModel, s)
+			#else:
+				#data = self.coalesce_translucent_noghost(VersionModel, s)
+		#return data
+
+
+			
+	#def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
+	def load_one(self, supplier_id, manufacturer_identifier, product_identifier):
+		
+		#for (key, value) in self.defaults.iteritems():
+			#if key not in data or data[key] is None:
+				#data[key] = value
+
+		query = self.session.query(SupplierCatalogItemModel)
+		query = query.filter(SupplierCatalogItemModel.supplier_id == supplier_id)
+		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier == manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemModel.product_identifier == product_identifier)
+		
+		try:
+			supplier_catalog_item = query.one()
+		except NoResultFound:
+			supplier_catalog_item = SupplierCatalogItemModel()
+			supplier_catalog_item.supplier_id = supplier_id
+			supplier_catalog_item.manufacturer_identifier = manufacturer_identifier
+			supplier_catalog_item.product_identifier = product_identifier
+			self.session.add(supplier_catalog_item)
+		
+		#for (field_name, item_name) in self.field_names.iteritems():
+			#setattr(supplier_catalog_item, item_name, data[field_name])
+		#supplier_catalog_item.effective = data['effective']
+		self.session.flush()
+
+
+	def update(self):
+		"""Update"""
+		logger.debug("Begin update()")
+		self.update_all(limit=10000, time_limit=timedelta(hours=1))
+		logger.debug("End update()")
+
+
+	def update_all(self, modified_since=None, limit=None, time_limit=None):
+		"""Update All"""
+		self.plugins = self.load_plugins()
+		logger.debug("Begin update_all()")
+		result = None
+		ts = self.term_stat('SupplierCatalogItem Update')
+		start_time = datetime.now()
+		try:
+			query = self.session.query(SupplierCatalogItemModel)
+			if modified_since:
+				query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
+			if limit:
+				query = query.order_by(SupplierCatalogItemModel.updated)
+				query = query.limit(limit)
+
+			ts['total'] = query.count()
+			self.session.begin(subtransactions=True)
+			for supplier_catalog_item in query.yield_per(10000):
+				self.update_one(supplier_catalog_item)
+				ts['done'] += 1
+				if time_limit is not None:
+					if datetime.now() > start_time + time_limit:
+						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						break;
+			self.session.commit()
+			result = True
+		except Exception as e:
+			logger.exception("Caught Exception: ")
+			if self.session.transaction is not None:
+				self.session.rollback()
+		finally:
+			ts.finish()
+		logger.debug("End update_all()")
+		return result
+			
+	def update_one(self, supplier_catalog_item):
+		"""
+		Update One
+		
+		Using ManufacturerConversion,
+			convert manufacturer_identifier to manufacturer_id
+		Using ProductConversion, 
+			convert product_identifier to product_id and quantity
+			quantity_cost from quantity, cost
+			quantity_retail from quantity, retail
+		Using CategoryConversion, 
+			convert category_identifier to category_id
+		Using ScaleConversion, 
+			convert scale_identifier to scale_id
+		Using PriceControl,
+			get price_control_id
+			using sale, quantity generate quantity_sale
+		"""
+		self.session.begin(subtransactions=True)
+		
+		self.update_supplier_catalog_item_version(supplier_catalog_item)
+		
+		self.update_manufacturer(supplier_catalog_item)
+		self.update_product(supplier_catalog_item)
+		self.update_category(supplier_catalog_item)
+		self.update_scale(supplier_catalog_item)
+		self.update_price_control(supplier_catalog_item)
+		supplier_catalog_item.updated = datetime.now()
+		self.session.commit()
+
+	def load_latest_supplier_catalog(self, supplier_id):
+		if supplier_id in self.latest_supplier_catalog_cache:
+			return self.latest_supplier_catalog_cache[supplier_id]
+		query = self.session.query(SupplierCatalogModel)
+		query = query.filter(SupplierCatalogModel.supplier_id == supplier_id)
+		supplier_catalog = query.order_by(desc(SupplierCatalogModel.issue_date)).first()
+		logger.debug("Latest Supplier %s, %s", supplier_id, supplier_catalog)
+		self.latest_supplier_catalog_cache[supplier_id] = supplier_catalog
+		return supplier_catalog
+
+	def update_supplier_catalog_item_version(self, supplier_catalog_item):
+		
+		if supplier_catalog_item.supplier_id not in self.plugins:
+			## Not an ETL tracked Supplier.
+			return
+		
+		plug = self.plugins[supplier_catalog_item.supplier_id]
+		model_name = plug.version_model()  + 'Model'
+		VersionModel = getattr(model, model_name)
+
+		## TODO: Don't overwrite manual entries
+		
+		self.latest_supplier_catalog = self.load_latest_supplier_catalog(supplier_catalog_item.supplier_id)
+		if self.latest_supplier_catalog is None:
+			logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_catalog_item.supplier_id)
+			## TODO: What should we be doing here? setting some sort of defaults?
+			return
+
+		query = self.session.query(SupplierCatalogItemFieldModel.id)
+		query = query.filter(SupplierCatalogItemFieldModel.supplier_id == supplier_catalog_item.supplier_id)
+		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == supplier_catalog_item.manufacturer_identifier)
+		query = query.filter(SupplierCatalogItemFieldModel.product_identifier == supplier_catalog_item.product_identifier)
+	
 		s = set()
 		for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
 			s.add(supplier_catalog_item_field_id)
+
+		del query
 
 		if plug.opaque() is True:
 			if plug.ghost() is True:
@@ -214,7 +362,44 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				data = self.coalesce_translucent_ghost(VersionModel, s)
 			else:
 				data = self.coalesce_translucent_noghost(VersionModel, s)
-		return data
+		#print "DATA IN", data
+		
+		if data is None:
+			logger.warning(
+				"Got None from coalesce %s %s-%s", 
+				supplier_catalog_item.supplier_id,
+				supplier_catalog_item.manufacturer_identifier,
+				supplier_catalog_item.product_identifier,
+			)
+			## TODO What should we do here?
+			return
+		
+		for (key, value) in self.defaults.iteritems():
+			if key not in data or data[key] is None:
+				data[key] = value
+
+		#print "DATA OUT", data
+
+		f = {
+			'advanced':'advanced',
+			#'availability_indefinite':'availability_indefinite',
+			'available':'available',
+			'category_identifier':'category_identifier',
+			'cost':'quantity_cost',
+			#'effective':'effective',
+			##'manufacturer_identifier':'manufacturer_identifier', 
+			'name':'name',
+			'phased_out':'phased_out',
+			##'product_identifier':'product_identifier',
+			'retail':'quantity_retail', 
+			'scale_identifier':'scale_identifier',
+			'special_cost':'quantity_special_cost',
+			'stock':'in_stock',
+			#'to_be_announced':'to_be_announced'
+		}
+
+		for (field_name, item_name) in f.iteritems():
+			setattr(supplier_catalog_item, item_name, data[field_name])
 
 	def coalesce_opaque_noghost(self, VersionModel, s):
 		query = self.session.query(VersionModel)
@@ -249,7 +434,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if data is None: 
 			return None
 		
-		if data['supplier_catalog_id'] != self.supplier_catalog_id:
+		if data['supplier_catalog_id'] != self.latest_supplier_catalog.id:
 			if plug.ghost_stock():
 				data['stock'] = False
 			if plug.ghost_phased_out():
@@ -298,7 +483,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if data is None: 
 			return None
 		
-		if data['supplier_catalog_id'] != self.supplier_catalog_id:
+		if data['supplier_catalog_id'] != self.latest_supplier_catalog.id:
 			if plug.ghost_stock():
 				data['stock'] = False
 			if plug.ghost_phased_out():
@@ -307,100 +492,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				data['advanced'] = False
 		return data
 
-			
-	def load_one(self, data, supplier_id, manufacturer_identifier, product_identifier):
-		
-		for (key, value) in self.defaults.iteritems():
-			if key not in data or data[key] is None:
-				data[key] = value
-
-		query = self.session.query(SupplierCatalogItemModel)
-		query = query.filter(SupplierCatalogItemModel.supplier_id == supplier_id)
-		query = query.filter(SupplierCatalogItemModel.manufacturer_identifier == manufacturer_identifier)
-		query = query.filter(SupplierCatalogItemModel.product_identifier == product_identifier)
-		
-		try:
-			supplier_catalog_item = query.one()
-		except NoResultFound:
-			supplier_catalog_item = SupplierCatalogItemModel()
-			supplier_catalog_item.supplier_id = supplier_id
-			supplier_catalog_item.manufacturer_identifier = manufacturer_identifier
-			supplier_catalog_item.product_identifier = product_identifier
-			self.session.add(supplier_catalog_item)
-		
-		for (field_name, item_name) in self.field_names.iteritems():
-			setattr(supplier_catalog_item, item_name, data[field_name])
-		#supplier_catalog_item.effective = data['effective']
-		self.session.flush()
-
-
-	def update(self):
-		"""Update"""
-		logger.debug("Begin update()")
-		self.update_all(limit=10000, time_limit=timedelta(hours=1))
-		logger.debug("End update()")
-
-
-	def update_all(self, modified_since=None, limit=None, time_limit=None):
-		"""Update All"""
-		logger.debug("Begin update_all()")
-		result = None
-		ts = self.term_stat('SupplierCatalogItem Update')
-		start_time = datetime.now()
-		try:
-			query = self.session.query(SupplierCatalogItemModel)
-			if modified_since:
-				query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
-			if limit:
-				query = query.order_by(SupplierCatalogItemModel.updated)
-				query = query.limit(limit)
-
-			ts['total'] = query.count()
-			#self.session.begin(subtransactions=True)
-			for supplier_catalog_item in query.yield_per(1000):
-				self.update_one(supplier_catalog_item)
-				ts['done'] += 1
-				if time_limit is not None:
-					if datetime.now() > start_time + time_limit:
-						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
-						break;
-			#self.session.commit()
-			result = True
-		except Exception as e:
-			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
-		finally:
-			ts.finish()
-		logger.debug("End update_all()")
-		return result
-			
-	def update_one(self, supplier_catalog_item):
-		"""
-		Update One
-		
-		Using ManufacturerConversion,
-			convert manufacturer_identifier to manufacturer_id
-		Using ProductConversion, 
-			convert product_identifier to product_id and quantity
-			quantity_cost from quantity, cost
-			quantity_retail from quantity, retail
-		Using CategoryConversion, 
-			convert category_identifier to category_id
-		Using ScaleConversion, 
-			convert scale_identifier to scale_id
-		Using PriceControl,
-			get price_control_id
-			using sale, quantity generate quantity_sale
-		"""
-		self.session.begin(subtransactions=True)
-		self.update_manufacturer(supplier_catalog_item)
-		self.update_product(supplier_catalog_item)
-		self.update_category(supplier_catalog_item)
-		self.update_scale(supplier_catalog_item)
-		self.update_price_control(supplier_catalog_item)
-		supplier_catalog_item.updated = datetime.now()
-		self.session.commit()
 
 	def update_manufacturer(self, supplier_catalog_item):
 		#self.session.begin(subtransactions=True)
