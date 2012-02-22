@@ -15,7 +15,8 @@ executables = [
 	'fixperms.py', 
 	'mirror.py',
 	'force_load_walthers_catalog.py',
-	'manage.py'
+	'force_load_heartland_catalog.py',
+	'migration.py'
 ]
 
 file_owner = pwd.getpwnam('www-data')[2]
