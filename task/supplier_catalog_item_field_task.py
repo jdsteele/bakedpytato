@@ -135,8 +135,8 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 		self.vacuum_all(limit=1000000, time_limit=timedelta(hours=1))
 		logger.debug('End vacuum()')
 
-	def vacuum_all(self, limit=None, time_limit=None):
-		logger.debug('Begin vacuum_all(limit=%s)', limit)
+	def vacuum_all(self, limit=None, time_limit=None, unupdated=False):
+		logger.debug('Begin vacuum_all(limit=%s, time_limit=%s, unupdated=%s)', limit, time_limit, unupdated)
 		##TODO delete SCIFields with SCFilterId not found in SCFilter
 
 		self.plugins = self.load_plugins()
@@ -157,6 +157,8 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				
 				query = self.session.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
+				if unupdated is not True:
+					query = query.filter(SupplierCatalogItemFieldModel.updated != None)
 				
 				if limit is not None:
 					query = query.order_by(SupplierCatalogItemFieldModel.vacuumed)

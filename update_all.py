@@ -24,15 +24,15 @@ while(True):
 	SupplierCatalogTask().load()
 	SupplierCatalogTask().update()
 
-	SupplierCatalogItemVersionTask().vacuum()
 	SupplierCatalogItemVersionTask().load()
+	SupplierCatalogItemVersionTask().vacuum()
 
-	SupplierCatalogItemFieldTask().vacuum()
 	SupplierCatalogItemFieldTask().update()
+	SupplierCatalogItemFieldTask().vacuum()
 
-	#SupplierCatalogItemTask().vacuum()
 	SupplierCatalogItemTask().load()
 	SupplierCatalogItemTask().update()
+	#SupplierCatalogItemTask().vacuum()
 	
 	#InventoryItemTask().load()
 	

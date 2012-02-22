@@ -83,6 +83,11 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	
 	latest_supplier_catalog_cache = dict()
 
+	category_conversion_filter = None
+	manufacturer_conversion_filter = None
+	price_control_filter = None
+	scale_conversion_filter = None
+
 	def load(self):
 		"""Load"""
 		logger.debug("Begin load()")
@@ -636,33 +641,58 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def get_category_conversion(self, supplier_id, manufacturer_id, category_identifier):
 		"""Category Conversion"""
-		query = self.session.query(CategoryConversionModel)
-		query = query.filter(CategoryConversionModel.supplier_id == supplier_id)
-		query = query.filter(CategoryConversionModel.manufacturer_id == manufacturer_id)
-		query = query.filter(CategoryConversionModel.needle == category_identifier)
-		try:
-			category_conversion = query.one()
-			return category_conversion
-		except NoResultFound:
-			pass
+		if self.category_conversion_filter is None:
+			self.category_conversion_filter = ScalableBloomFilter()
+			query = self.session.query(
+				CategoryConversionModel.supplier_id,
+				CategoryConversionModel.manufacturer_id,
+				CategoryConversionModel.needle
+			)
+			for row in query.yield_per(100):
+				self.category_conversion_filter.add(row)
+		
+		row = (supplier_id, manufacturer_id, category_identifier)
+		if row in self.category_conversion_filter:
+			query = self.session.query(CategoryConversionModel)
+			query = query.filter(CategoryConversionModel.supplier_id == supplier_id)
+			query = query.filter(CategoryConversionModel.manufacturer_id == manufacturer_id)
+			query = query.filter(CategoryConversionModel.needle == category_identifier)
+			try:
+				category_conversion = query.one()
+				return category_conversion
+			except NoResultFound:
+				pass
+
 		category_conversion = CategoryConversionModel()
 		category_conversion.manufacturer_id = manufacturer_id
 		category_conversion.supplier_id = supplier_id
 		category_conversion.needle = category_identifier
 		self.session.add(category_conversion)
+		self.category_conversion_filter.add(row)
 		return category_conversion
 		
 		
 	def get_manufacturer_conversion(self, supplier_id, manufacturer_identifier):
 		"""Manufacturer Conversion"""
-		query = self.session.query(ManufacturerConversionModel)
-		query = query.filter(ManufacturerConversionModel.supplier_id == supplier_id)
-		query = query.filter(ManufacturerConversionModel.manufacturer_identifier == manufacturer_identifier)
-		try:
-			manufacturer_conversion = query.one()
-			return manufacturer_conversion
-		except NoResultFound:
-			pass
+		if self.manufacturer_conversion_filter is None:
+			self.manufacturer_conversion_filter = ScalableBloomFilter()
+			query = self.session.query(
+				ManufacturerConversionModel.supplier_id,
+				ManufacturerConversionModel.manufacturer_identifier
+			)
+			for row in query.yield_per(100):
+				self.manufacturer_conversion_filter.add(row)
+		
+		row = (supplier_id, manufacturer_identifier)
+		if row in self.manufacturer_conversion_filter:
+			query = self.session.query(ManufacturerConversionModel)
+			query = query.filter(ManufacturerConversionModel.supplier_id == supplier_id)
+			query = query.filter(ManufacturerConversionModel.manufacturer_identifier == manufacturer_identifier)
+			try:
+				manufacturer_conversion = query.one()
+				return manufacturer_conversion
+			except NoResultFound:
+				pass
 			
 		query = self.session.query(ManufacturerModel)
 		query = query.filter(ManufacturerModel.identifier == manufacturer_identifier)
@@ -682,44 +712,55 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def get_price_control(self, supplier_id, manufacturer_id, retail, preorder, special):
 		"""Price Control"""
-		query = self.session.query(PriceControlModel)
-		query = query.filter(PriceControlModel.supplier_id == supplier_id)
-		query = query.filter(PriceControlModel.manufacturer_id == manufacturer_id)
-		if preorder:
-			query = query.filter(PriceControlModel.preorder == True)
-			
-		if special:
-			query = query.filter(PriceControlModel.special == True)
-		
-		if (not preorder) and (not special):
-			query = query.filter(PriceControlModel.normal == True)
-		
-		query = query.filter(PriceControlModel.retail_low <= retail)
-		query = query.filter(PriceControlModel.retail_high >= retail)
-		query = query.filter(PriceControlModel.enable == True)
-		try:
-			price_control = query.one()
-			return price_control
-		except NoResultFound:
-			#logger.warning(
-			#	"No PriceControl found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
-			#	supplier_id, 
-			#	manufacturer_id, 
-			#	retail, 
-			#	preorder, 
-			#	special
-			#)
-			return None
-		except MultipleResultsFound:
-			logger.warning(
-				"Duplicate PriceControls found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
-				supplier_id, 
-				manufacturer_id, 
-				retail, 
-				preorder, 
-				special
+		if self.price_control_filter is None:
+			self.price_control_filter = ScalableBloomFilter()
+			query = self.session.query(
+				PriceControlModel.supplier_id,
+				PriceControlModel.manufacturer_id
 			)
-			return None
+			for row in query.yield_per(100):
+				self.price_control_filter.add(row)
+		
+		row = (supplier_id, manufacturer_id)
+		if row in self.price_control_filter:
+			query = self.session.query(PriceControlModel)
+			query = query.filter(PriceControlModel.supplier_id == supplier_id)
+			query = query.filter(PriceControlModel.manufacturer_id == manufacturer_id)
+			if preorder:
+				query = query.filter(PriceControlModel.preorder == True)
+				
+			if special:
+				query = query.filter(PriceControlModel.special == True)
+			
+			if (not preorder) and (not special):
+				query = query.filter(PriceControlModel.normal == True)
+			
+			query = query.filter(PriceControlModel.retail_low <= retail)
+			query = query.filter(PriceControlModel.retail_high >= retail)
+			query = query.filter(PriceControlModel.enable == True)
+			try:
+				price_control = query.one()
+				return price_control
+			except NoResultFound:
+				#logger.warning(
+				#	"No PriceControl found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
+				#	supplier_id, 
+				#	manufacturer_id, 
+				#	retail, 
+				#	preorder, 
+				#	special
+				#)
+				return None
+			except MultipleResultsFound:
+				logger.warning(
+					"Duplicate PriceControls found for supplier_id '%s' manufacturer_id '%s' retail '%s', preorder '%s', special '%s'", 
+					supplier_id, 
+					manufacturer_id, 
+					retail, 
+					preorder, 
+					special
+				)
+		return None
 
 
 	def get_product_conversion(self, supplier_id, manufacturer_id, product_identifier):
@@ -766,16 +807,29 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			return None
 		if supplier_id is None:
 			return None
+
+
+		if self.scale_conversion_filter is None:
+			self.scale_conversion_filter = ScalableBloomFilter()
+			query = self.session.query(
+				ScaleConversionModel.supplier_id,
+				ScaleConversionModel.scale_identifier
+			)
+			for row in query.yield_per(100):
+				self.scale_conversion_filter.add(row)
 		
-		query = self.session.query(ScaleConversionModel)
-		query = query.filter(ScaleConversionModel.supplier_id == supplier_id)
-		query = query.filter(ScaleConversionModel.scale_identifier == scale_identifier)
-		
-		try:
-			scale_conversion = query.one()
-			return scale_conversion
-		except NoResultFound:
-			pass
+		row = (supplier_id, scale_identifier)
+		if row in self.scale_conversion_filter:
+			
+			query = self.session.query(ScaleConversionModel)
+			query = query.filter(ScaleConversionModel.supplier_id == supplier_id)
+			query = query.filter(ScaleConversionModel.scale_identifier == scale_identifier)
+			
+			try:
+				scale_conversion = query.one()
+				return scale_conversion
+			except NoResultFound:
+				pass
 
 		query = self.session.query(ScaleModel)
 		query = query.filter(ScaleModel.name == scale_identifier)
@@ -795,5 +849,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			scale_conversion.supplier_id = supplier_id
 			scale_conversion.scale_identifier = scale_identifier
 			self.session.add(scale_conversion)
+			self.scale_conversion_filter.add(row)
 			self.session.flush()
 			return scale_conversion
