@@ -38,8 +38,8 @@ while(True):
 	
 	#sleep(60)
 	
-	ProductTask().load_all()
-	ProductTask().update_all()
+	ProductTask().load()
+	ProductTask().update()
 	ProductTask().sort()
 
 	#ProductDailyStat().load()
@@ -52,5 +52,5 @@ while(True):
 	#CatalogTask().load()
 	#CatalogCategoryTask().load()
 	#CatalogTask().update()
-
+	print "Sleep..."
 	sleep(60*10) #10 mins

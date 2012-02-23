@@ -88,6 +88,10 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	price_control_filter = None
 	scale_conversion_filter = None
 
+	def __init__(self, *a, **b):
+		BaseSupplierTask(self, *a, **b):
+		self.plugins = self.load_plugins()
+
 	def load(self):
 		"""Load"""
 		logger.debug("Begin load()")
@@ -96,7 +100,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def load_all(self, supplier_id=None):
 		logger.debug("Begin load_all()")
-		self.plugins = self.load_plugins()
 		self.ts = ttystatus.TerminalStatus(period=1)
 		self.ts.add(ttystatus.Literal('SupplierCatalogItem Load  Elapsed: '))
 		self.ts.add(ttystatus.ElapsedTime())
@@ -223,7 +226,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 	def update_all(self, modified_since=None, limit=None, time_limit=None):
 		"""Update All"""
-		self.plugins = self.load_plugins()
 		logger.debug("Begin update_all()")
 		result = None
 		ts = self.term_stat('SupplierCatalogItem Update')
@@ -322,7 +324,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		return supplier_catalog
 
 	def update_supplier_catalog_item_version(self, supplier_catalog_item):
-		
 		if supplier_catalog_item.supplier_id not in self.plugins:
 			## Not an ETL tracked Supplier.
 			return
@@ -399,6 +400,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (field_name, item_name) in f.iteritems():
 			setattr(supplier_catalog_item, item_name, data[field_name])
 
+
 	def coalesce_opaque_noghost(self, VersionModel, s, get_effective=False):
 		query = self.session.query(VersionModel)
 		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
@@ -428,8 +430,9 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			data['effective'] = effective
 		return data
 
-	def coalesce_opaque_ghost(self, VersionModel, s, plug):
-		data = self.coalesce_opaque_noghost(VersionModel, s)
+
+	def coalesce_opaque_ghost(self, VersionModel, s, plug, get_effective=False):
+		data = self.coalesce_opaque_noghost(VersionModel, s, get_effective)
 		if data is None: 
 			return None
 		

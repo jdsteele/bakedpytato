@@ -42,6 +42,9 @@ logger = logging.getLogger(__name__)
 
 class ProductTask(BaseTask):
 
+	def load(delf):
+		self.load_all()
+		
 	def load_all(self):
 		"""Load All"""
 		logger.debug("Begin load_all()")
@@ -91,9 +94,14 @@ class ProductTask(BaseTask):
 			self.session.add(product)
 			
 			supplier_catalog_item_task = SupplierCatalogItemTask()
-			supplier_catalog_item_task.update_one(supplier_catalog_item)
+			supplier_catalog_item_task.update_product(supplier_catalog_item)
 		self.session.commit()
-		
+
+
+	def update(self):
+		self.update_all():
+
+
 	def update_all(self):
 		"""Update All"""
 		logger.debug("Begin update_all()")
