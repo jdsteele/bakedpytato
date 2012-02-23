@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 
-	default_encoding = 'ISO-8859-2'
+	default_encoding = 'ISO-8859-1'
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):

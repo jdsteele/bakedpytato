@@ -75,9 +75,9 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				query = query.order_by(SupplierCatalogItemFieldModel.updated)
 				query = query.limit(limit)
 			self.ts['total'] = query.count()
-			for supplier_catalog_item_field in query.yield_per(1000):
+			for supplier_catalog_item_field in query.yield_per(10000):
 				self.update_one(supplier_catalog_item_field)
-				if self.ts['done'] % 1000 == 0:
+				if self.ts['done'] % 10000 == 0:
 					self.session.flush()
 				if time_limit is not None:
 					if datetime.now() > start_time + time_limit:

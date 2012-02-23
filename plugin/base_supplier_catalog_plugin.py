@@ -39,6 +39,13 @@ class BaseSupplierCatalogPlugin(BasePlugin):
 
 	def get_encoding(self, supplier_catalog):
 		"""Subclass Me"""
+		
+		content = supplier_catalog.file_import.content
+		try:
+			c = content.decode('ascii')
+			return 'ascii'
+		except Exception:
+			pass
 		encoding = chardet.detect(supplier_catalog.file_import.content)
 		return encoding
 

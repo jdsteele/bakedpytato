@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 
-	default_encoding = 'ascii'
+	default_encoding = 'ISO-8859-1'
 
 	prefixes = {
 		'EN':['N', 'Freight Rolling Stock'],

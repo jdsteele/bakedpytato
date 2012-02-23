@@ -1,3 +1,4 @@
 cfg.py
+cfg/db.py
 *.pyc
 beaker_data

@@ -131,7 +131,8 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 			for supplier_catalog in query.yield_per(100):
 				if supplier_catalog.supplier_catalog_filter_id is None:
 					continue
-				if supplier_catalog.encoding is None:
+				#if supplier_catalog.encoding is None:
+				if True:
 					plug = plugins[supplier_catalog.supplier_catalog_filter_id]
 					encoding = plug.get_encoding(supplier_catalog)
 					if encoding is None:

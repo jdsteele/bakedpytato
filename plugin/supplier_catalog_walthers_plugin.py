@@ -64,7 +64,7 @@ AVAILABILITY_INDEFINITE = 999999
 
 class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 	
-	default_encoding = 'ISO-8859-2'
+	default_encoding = 'ISO-8859-1'
 
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
@@ -193,13 +193,24 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 
 	def get_encoding(self, supplier_catalog):
 		"""Subclass Me"""
-		detector = UniversalDetector()
+		#detector = UniversalDetector()
 		for data in self.get_items(supplier_catalog, raw_encoding=True):
 			if 'NAME' in data:
-				detector.feed(data['NAME'])
-			if detector.done: break
-		detector.close()
-		encoding = detector.result
+				try:
+					e = data['NAME']
+					d = e.decode('ascii')
+					continue
+				except UnicodeDecodeError, exc:
+					print exc
+				
+				d = e.decode('ISO-8859-1')
+				print e, ")\t(", d, ' === ISO-8859-1'
+				
+				
+				#detector.feed(data['NAME'])
+			#if detector.done: break
+		#detector.close()
+		encoding = {'encoding' : 'ISO-8859-1'}
 		return encoding
 
 	def issue_date(self, file_import):
