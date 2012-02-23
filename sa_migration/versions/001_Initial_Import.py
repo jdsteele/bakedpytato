@@ -913,11 +913,124 @@ data.append({
 		{'name': 'last_sale', 'type_': Date, 'nullable':True},
 		{'name': 'created', 'type_': DateTime, 'nullable':True},
 		{'name': 'modified', 'type_': DateTime, 'nullable':True},
+	],
+})
+
+data.append({
+	'name':'product_weekly_stats',
+	'columns': [
+		{'name': 'id', 'type_': UUID, 'primary_key': True, 'nullable': False},
+		{'name': 'customer_order_quantity', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'customer_order_total', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'customer_shipment_quantity', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'customer_shipment_total', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'iso_week', 'type_': Integer, 'nullable': False}
+		{'name': 'iso_year', 'type_': Integer, 'nullable': False}
+		{'name': 'product_id', 'type_': UUID, 'nullable': False, 'index': True}
+		{'name': 'supplier_shipment_quantity', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'supplier_shipment_total', 'type_': Numeric, 'server_default': '0', 'nullable':False},
+		{'name': 'created', 'type_': DateTime, 'nullable':True},
+		{'name': 'modified', 'type_': DateTime, 'nullable':True},
+	],
+})
+
+data.append({
+	'name':'product_yearly_stats',
+	'columns': [
+		{'name': 'id', 'type_': UUID, 'primary_key': True, 'nullable': False},
+		{'name': 'customer_order_quantity', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'customer_order_total', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'customer_shipment_quantity', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'customer_shipment_total', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'product_id', 'type_': UUID, 'nullable': False},
+		{'name': 'supplier_shipment_quantity', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'supplier_shipment_total', 'type_': Numeric, 'server_default': '0', 'nullable': False},
+		{'name': 'year', 'type_': Integer, 'nullable': False},
+		{'name': 'created', 'type_': DateTime, 'nullable':True},
+		{'name': 'modified', 'type_': DateTime, 'nullable':True},
+	],
+})
+
+
+data.append({
+	'name':'products',
+	'columns': [
+		{'name': 'id', 'type_': UUID, 'primary_key': True, 'nullable': False},
+		{'name': 'archived', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'base_sale', 'type_': Numeric, 'nullable': False, 'server_default': '0'},
+		{'name': 'cost', 'type_': Numeric, 'nullable': False, 'server_default': '0'},
+		{'name': 'category_id', 'type_': Integer, 'nullable': True},
+		{'name': 'catalog_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'customer_order_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'customer_shipment_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'description', 'type_': String, 'nullable': True},
+		{'name': 'enabled', 'type_': Boolean, 'nullable': False, 'server_default': 'true'},
+		{'name': 'force_in_stock', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'identifier', 'type_': String, 'nullable': False},
+		{'name': 'image_url', 'type_': String, 'nullable': True},
+		{'name': 'inventory_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'legacy_flag', 'type_': Integer, 'nullable': True},
+		{'name': 'lock_base_sale', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_category', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_cost', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_name', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_retail', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_sale', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'lock_scale', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'manufacturer_id', 'type_': UUID, 'nullable': False},
+		{'name': 'name', 'type_': String, 'nullable': True},
+		{'name': 'product_conversion_count', 'type_': Integer, 'nullable': True},
+		{'name': 'product_package_count', 'type_': Integer, 'nullable': True},
+		{'name': 'ratio', 'type_': Numeric, 'nullable': False, 'server_default': '100'},
+		{'name': 'retail', 'type_': Numeric, 'nullable': True},
+		{'name': 'sale', 'type_': Numeric, 'nullable': True},
+		{'name': 'scale_id', 'type_': UUID, 'nullable': True},
+		{'name': 'serial', 'type_': Integer, 'nullable': True},
+		{'name': 'shippable', 'type_': Boolean, 'nullable': False, 'server_default': 'true'},
+		{'name': 'sort', 'type_': Integer, 'nullable': False, 'server_default': '0'},
+		{'name': 'stock', 'type_': Numeric, 'nullable': False, 'server_default': '0'},
+		{'name': 'supplier_advanced', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'supplier_catalog_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'supplier_catalog_item_id', 'type_': UUID, 'nullable': True},
+		{'name': 'supplier_phased_out', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'supplier_shipment_item_count', 'type_': Integer, 'nullable': True},
+		{'name': 'supplier_special', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'supplier_stock', 'type_': Boolean, 'nullable': False, 'server_default': 'false'},
+		{'name': 'url', 'type_': String, 'nullable': True},
+		{'name': 'created', 'type_': DateTime, 'nullable':True},
+		{'name': 'modified', 'type_': DateTime, 'nullable':True},
 		{'name': 'creator_id', 'type_': UUID, 'nullable':True},
 		{'name': 'modifier_id', 'type_': UUID, 'nullable':True},
 	],
 })
 
+data.append({
+	'name':'products_images',
+	'columns': [
+		{'name': 'id', 'type_': UUID, 'primary_key': True, 'nullable': False},
+		{'name': 'product_id' UUID, 'nullable': False},
+		{'name': 'image_id' UUID, 'nullable': False},
+		{'name': 'created', 'type_': DateTime, 'nullable':True},
+		{'name': 'modified', 'type_': DateTime, 'nullable':True},
+		{'name': 'creator_id', 'type_': UUID, 'nullable':True},
+		{'name': 'modifier_id', 'type_': UUID, 'nullable':True},
+	],
+})
+
+data.append({
+	'name':'scale_conversions',
+	'columns': [
+		{'name': 'id', 'type_': UUID, 'primary_key': True, 'nullable': False},
+		{'name': 'lock', 'type_': Boolean, 'nullable':False, 'server_default': 'false'},
+		{'name': 'scale_id', 'type_': UUID, 'nullable':True},
+		{'name': 'scale_identifier', 'type_': String, 'nullable': False},s
+		{'name': 'supplier_id', 'type_': UUID, 'nullable':True},
+		{'name': 'created', 'type_': DateTime, 'nullable':True},
+		{'name': 'modified', 'type_': DateTime, 'nullable':True},
+		{'name': 'creator_id', 'type_': UUID, 'nullable':True},
+		{'name': 'modifier_id', 'type_': UUID, 'nullable':True},
+	],
+})
 
 def downgrade(migrate_engine):
 	# Upgrade operations go here. Don't create your own engine; bind
@@ -956,180 +1069,6 @@ def upgrade(migrate_engine):
 			if column.name not in s:
 				logger.warning("Extra Column '%s' found in table '%s'", column.name, table.name)
 
-
-#-- Table: bakedpotato.product_specials
-#-- DROP TABLE bakedpotato.product_stats;
-
-#CREATE TABLE bakedpotato.product_stats
-#(
-  #id uuid NOT NULL,
-  #product_id uuid NOT NULL,
-  #first_sale date,
-  #last_sale date,
-  #CONSTRAINT product_stats_pkey PRIMARY KEY (id )
-#)
-#WITH (
-  #OIDS=FALSE
-#);
-#ALTER TABLE bakedpotato.product_stats
-  #OWNER TO bakedpotato_owner;
-#-- Table: bakedpotato.product_weekly_stats
-
-#-- DROP TABLE bakedpotato.product_weekly_stats;
-
-#CREATE TABLE bakedpotato.product_weekly_stats
-#(
-  #id uuid NOT NULL,
-  #product_id uuid NOT NULL,
-  #customer_order_quantity numeric DEFAULT 0,
-  #customer_shipment_quantity numeric DEFAULT 0,
-  #supplier_shipment_quantity numeric DEFAULT 0,
-  #customer_order_total numeric DEFAULT 0,
-  #iso_year integer,
-  #iso_week integer,
-  #customer_shipment_total numeric,
-  #supplier_shipment_total numeric,
-  #CONSTRAINT product_weekly_stats_pkey PRIMARY KEY (id )
-#)
-#WITH (
-  #OIDS=FALSE
-#);
-#ALTER TABLE bakedpotato.product_weekly_stats
-  #OWNER TO bakedpotato_owner;
-#-- Table: bakedpotato.product_yearly_stats
-
-#-- DROP TABLE bakedpotato.product_yearly_stats;
-
-#CREATE TABLE bakedpotato.product_yearly_stats
-#(
-  #id uuid NOT NULL,
-  #product_id uuid,
-  #customer_order_quantity numeric,
-  #customer_shipment_quantity numeric,
-  #supplier_shipment_quantity numeric,
-  #customer_order_total numeric,
-  #customer_shipment_total numeric,
-  #supplier_shipment_total numeric,
-  #year integer,
-  #CONSTRAINT product_yearly_stats_pkey PRIMARY KEY (id )
-#)
-#WITH (
-  #OIDS=FALSE
-#);
-#ALTER TABLE bakedpotato.product_yearly_stats
-  #OWNER TO bakedpotato_owner;
-#-- Table: bakedpotato.products
-
-#-- DROP TABLE bakedpotato.products;
-
-#CREATE TABLE bakedpotato.products
-#(
-  #id uuid NOT NULL,
-  #manufacturer_id uuid NOT NULL,
-  #scale_id uuid,
-  #identifier character varying(20) NOT NULL,
-  #name character varying(255) DEFAULT NULL::character varying,
-  #description character varying(255) DEFAULT NULL::character varying,
-  #archived boolean NOT NULL DEFAULT false,
-  #supplier_phased_out boolean NOT NULL DEFAULT false,
-  #sort integer DEFAULT 0,
-  #customer_order_item_count integer,
-  #customer_shipment_item_count integer,
-  #inventory_item_count integer,
-  #supplier_catalog_item_count integer,
-  #supplier_shipment_item_count integer,
-  #created timestamp without time zone,
-  #modified timestamp without time zone,
-  #creator_id uuid,
-  #modifier_id uuid,
-  #legacy_flag integer,
-  #image_url character varying(255) DEFAULT NULL::character varying,
-  #url character varying(255) DEFAULT NULL::character varying,
-  #cost numeric,
-  #lock_cost boolean NOT NULL DEFAULT false,
-  #retail numeric,
-  #lock_retail boolean NOT NULL DEFAULT false,
-  #sale numeric,
-  #lock_sale boolean NOT NULL DEFAULT false,
-  #enabled boolean NOT NULL DEFAULT true,
-  #lock_category boolean NOT NULL DEFAULT false,
-  #lock_name boolean NOT NULL DEFAULT false,
-  #force_in_stock boolean NOT NULL DEFAULT false,
-  #stock numeric NOT NULL DEFAULT 0,
-  #shippable boolean NOT NULL DEFAULT true,
-  #lock_scale boolean NOT NULL DEFAULT false,
-  #category_id integer,
-  #product_conversion_count integer,
-  #product_package_count integer,
-  #catalog_item_count integer,
-  #supplier_catalog_item_id uuid,
-  #serial integer,
-  #supplier_stock boolean NOT NULL DEFAULT false,
-  #supplier_advanced boolean NOT NULL DEFAULT false,
-  #supplier_special boolean NOT NULL DEFAULT false,
-  #ratio numeric NOT NULL DEFAULT 100,
-  #base_sale numeric NOT NULL DEFAULT 0,
-  #lock_base_sale boolean NOT NULL DEFAULT false,
-  #CONSTRAINT products_pkey PRIMARY KEY (id )
-#)
-#WITH (
-  #OIDS=FALSE
-#);
-#ALTER TABLE bakedpotato.products
-  #OWNER TO bakedpotato_owner;
-
-#-- Index: bakedpotato.products__identifier
-
-#-- DROP INDEX bakedpotato.products__identifier;
-
-#CREATE INDEX products__identifier
-  #ON bakedpotato.products
-  #USING btree
-  #(identifier COLLATE pg_catalog."default" );
-
-#-- Index: bakedpotato.products__manufacturer
-
-#-- DROP INDEX bakedpotato.products__manufacturer;
-
-#CREATE INDEX products__manufacturer
-  #ON bakedpotato.products
-  #USING btree
-  #(manufacturer_id );
-
-#-- Index: bakedpotato.products__unique
-
-#-- DROP INDEX bakedpotato.products__unique;
-
-#CREATE UNIQUE INDEX products__unique
-  #ON bakedpotato.products
-  #USING btree
-  #(manufacturer_id , identifier COLLATE pg_catalog."default" );
-
-#-- Table: bakedpotato.products_images
-
-#-- DROP TABLE bakedpotato.products_images;
-
-#CREATE TABLE bakedpotato.products_images
-#(
-  #id uuid NOT NULL,
-  #product_id uuid NOT NULL,
-  #image_id uuid NOT NULL,
-  #CONSTRAINT products_images_pkey PRIMARY KEY (id )
-#)
-#WITH (
-  #OIDS=FALSE
-#);
-#ALTER TABLE bakedpotato.products_images
-  #OWNER TO bakedpotato_owner;
-
-#-- Index: bakedpotato.products_images_idx1
-
-#-- DROP INDEX bakedpotato.products_images_idx1;
-
-#CREATE UNIQUE INDEX products_images_idx1
-  #ON bakedpotato.products_images
-  #USING btree
-  #(product_id , image_id );
 
 #-- Table: bakedpotato.scale_conversions
 
