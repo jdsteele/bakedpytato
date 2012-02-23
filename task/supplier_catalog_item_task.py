@@ -399,7 +399,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		for (field_name, item_name) in f.iteritems():
 			setattr(supplier_catalog_item, item_name, data[field_name])
 
-	def coalesce_opaque_noghost(self, VersionModel, s):
+	def coalesce_opaque_noghost(self, VersionModel, s, get_effective=False):
 		query = self.session.query(VersionModel)
 		query = query.filter(VersionModel.supplier_catalog_item_field_id.in_(s))
 		query = query.order_by(desc(VersionModel.effective))
@@ -419,12 +419,13 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		supplier_catalog_item_field_id = supplier_catalog_item_version.supplier_catalog_item_field_id
 		effective = supplier_catalog_item_version.effective
 		
-		for supplier_catalog_item_version in query.yield_per(5):
-			if supplier_catalog_item_version.supplier_catalog_item_field_id == supplier_catalog_item_field_id:
-				effective = supplier_catalog_item_version.effective
-			else:
-				break
-		data['effective'] = effective
+		if get_effective:
+			for supplier_catalog_item_version in query.yield_per(5):
+				if supplier_catalog_item_version.supplier_catalog_item_field_id == supplier_catalog_item_field_id:
+					effective = supplier_catalog_item_version.effective
+				else:
+					break
+			data['effective'] = effective
 		return data
 
 	def coalesce_opaque_ghost(self, VersionModel, s, plug):
