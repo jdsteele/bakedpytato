@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 class ProductTask(BaseTask):
 
-	def load(delf):
+	def load(self):
 		self.load_all()
 		
 	def load_all(self):
