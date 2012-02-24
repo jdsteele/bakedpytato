@@ -23,17 +23,17 @@ import logging
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 #Application Library
-import cfg
+from bakedpytato import cfg
 #from model import CategoryConversionModel
 #from model import ManufacturerModel, ManufacturerConversionModel
 #from model import PriceControlModel
 #from model import ProductModel, ProductConversionModel
 #from model import ScaleModel, ScaleConversionModel
-from model import SettingModel
+from bakedpytato.model import SettingModel
 
 #This Package
 #import priceutil
-from task.base_task import BaseTask
+from bakedpytato.task.base_task import BaseTask
 
 logger = logging.getLogger(__name__)
 

@@ -22,7 +22,7 @@ import chardet
 #Application Library
 
 #This Package
-from plugin.base_plugin import BasePlugin
+from bakedpytato.plugin.base_plugin import BasePlugin
 
 logger = logging.getLogger(__name__)
 

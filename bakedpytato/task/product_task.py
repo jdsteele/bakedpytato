@@ -99,7 +99,7 @@ class ProductTask(BaseTask):
 
 
 	def update(self):
-		self.update_all():
+		self.update_all()
 
 
 	def update_all(self):

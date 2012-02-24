@@ -14,7 +14,7 @@
 #Pragma
 from __future__ import unicode_literals
 
-from session import Session
+from bakedpytato.session import Session
 import re
 import ttystatus
 

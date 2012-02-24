@@ -21,11 +21,11 @@ import logging
 from sqlalchemy.orm.exc import NoResultFound
 
 #Application Library
-from model import SupplierCatalogFilterModel
-import plugin
+from bakedpytato.model import SupplierCatalogFilterModel
+from bakedpytato import plugin
 
 #This Package
-from task.base_task import BaseTask
+from bakedpytato.task.base_task import BaseTask
 
 logger = logging.getLogger(__name__)
 

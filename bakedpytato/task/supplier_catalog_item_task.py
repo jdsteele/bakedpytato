@@ -28,20 +28,20 @@ from sqlalchemy import asc, desc
 from pybloom import ScalableBloomFilter
 
 #Application Library
-import cfg
-import model
-from model import CategoryConversionModel
-from model import ManufacturerModel, ManufacturerConversionModel
-from model import PriceControlModel
-from model import ProductModel, ProductConversionModel
-from model import ScaleModel, ScaleConversionModel
-from model import SupplierCatalogModel, SupplierCatalogItemModel, SupplierCatalogItemFieldModel
-from model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
+from bakedpytato import cfg
+from bakedpytato import model
+from bakedpytato.model import CategoryConversionModel
+from bakedpytato.model import ManufacturerModel, ManufacturerConversionModel
+from bakedpytato.model import PriceControlModel
+from bakedpytato.model import ProductModel, ProductConversionModel
+from bakedpytato.model import ScaleModel, ScaleConversionModel
+from bakedpytato.model import SupplierCatalogModel, SupplierCatalogItemModel, SupplierCatalogItemFieldModel
+from bakedpytato.model.supplier_catalog_item_version_mixin import SupplierCatalogItemVersionMixin
 
 #This Package
-from util.price_util import decimal_round
-from task.setting_task import SettingTask
-from task.base_supplier_catalog_task import BaseSupplierCatalogTask
+from bakedpytato.util.price_util import decimal_round
+from bakedpytato.task.setting_task import SettingTask
+from bakedpytato.task.base_supplier_catalog_task import BaseSupplierCatalogTask
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	scale_conversion_filter = None
 
 	def __init__(self, *a, **b):
-		BaseSupplierTask(self, *a, **b):
+		BaseSupplierCatalogTask(self, *a, **b)
 		self.plugins = self.load_plugins()
 
 	def load(self):

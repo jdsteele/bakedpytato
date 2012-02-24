@@ -15,42 +15,42 @@
 #Pragma
 from __future__ import unicode_literals
 
-import cfg
-from task import *
+from bakedpytato import task
+
 from time import sleep
 
 while(True):
 
-	SupplierCatalogTask().load()
-	SupplierCatalogTask().update()
+	task.SupplierCatalogTask().load()
+	task.SupplierCatalogTask().update()
 
-	SupplierCatalogItemVersionTask().load()
-	SupplierCatalogItemVersionTask().vacuum()
+	task.SupplierCatalogItemVersionTask().load()
+	task.SupplierCatalogItemVersionTask().vacuum()
 
-	SupplierCatalogItemFieldTask().update()
-	SupplierCatalogItemFieldTask().vacuum()
+	task.SupplierCatalogItemFieldTask().update()
+	task.SupplierCatalogItemFieldTask().vacuum()
 
-	SupplierCatalogItemTask().load()
-	SupplierCatalogItemTask().update()
-	#SupplierCatalogItemTask().vacuum()
+	task.SupplierCatalogItemTask().load()
+	task.SupplierCatalogItemTask().update()
+	#task.SupplierCatalogItemTask().vacuum()
 	
-	#InventoryItemTask().load()
+	#task.InventoryItemTask().load()
 	
 	#sleep(60)
 	
-	ProductTask().load()
-	ProductTask().update()
-	ProductTask().sort()
+	task.ProductTask().load()
+	task.ProductTask().update()
+	task.ProductTask().sort()
 
-	#ProductDailyStat().load()
-	#ProductWeeklyStat().load()
-	#ProductMonthlyStat().load()
-	#ProductYearlyStat().load()
+	#task.ProductDailyStat().load()
+	#task.ProductWeeklyStat().load()
+	#task.ProductMonthlyStat().load()
+	#task.ProductYearlyStat().load()
 
-	#ProductPackageTask.update()
+	#task.ProductPackageTask.update()
 	
-	#CatalogTask().load()
-	#CatalogCategoryTask().load()
-	#CatalogTask().update()
+	#task.CatalogTask().load()
+	#task.CatalogCategoryTask().load()
+	#task.CatalogTask().update()
 	print "Sleep..."
 	sleep(60*10) #10 mins
