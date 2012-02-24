@@ -89,7 +89,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 	scale_conversion_filter = None
 
 	def __init__(self):
-		BaseSupplierCatalogTask(self)
+		BaseSupplierCatalogTask.__init__(self)
 		self.plugins = self.load_plugins()
 
 	def load(self):
