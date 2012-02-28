@@ -1,0 +1,4 @@
+recursive-include bakedpytato/public *
+include bakedpytato/public/favicon.ico
+recursive-include bakedpytato/i18n *
+recursive-include bakedpytato/templates *

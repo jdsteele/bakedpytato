@@ -1,4 +1,4 @@
-cfg.py
-cfg/db.py
+bakedpytato/bakedpytato/cfg/db.py
+bakedpytato/development.ini
 *.pyc
 beaker_data
