@@ -64,7 +64,7 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 				if len(row) > i:
 					field = row[i]
 					field = field.strip()
-					if field == '':
+					if field == bytes(''):
 						field = None
 					item[column_name] = field
 				i += 1

@@ -24,20 +24,17 @@ import ttystatus
 from bakedpytato.model import metadata, DBSession
 
 
-#class FormattedString(ttystatus.Widget):
-#	def __init__(self, format, *keys):
-#		self.format = format
-#		self.keys = keys
-#		self.values = dict()
-#	def update(self, master, width):
-#		for key in self.keys:
-#			self.values[key] = master[key]
-#			
-#	def format(self):
-#		return self.format.format(self.values)
-
 class BaseTask(object):
 	logref = None
+
+
+	def __init__(self):
+		"""Init"""
+		self.dbsession = DBSession(autocommit=False)
+### self.session shall be deprecated, replaced with dbsession to 
+### avoid confusion with turbogear's cookie sessions
+		self.session = self.dbsession
+
 
 	def term_stat(self, message, count=None):
 		ts = ttystatus.TerminalStatus(period=0.5)
@@ -69,9 +66,6 @@ class BaseTask(object):
 		ts['sub_done'] = 0
 		return ts
 	
-	def __init__(self):
-		"""Init"""
-		self.session = DBSession()
 		
 	def pluralize(self, word):
 		if not word.endswith('s'):
