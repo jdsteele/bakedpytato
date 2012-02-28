@@ -229,7 +229,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 		logger.debug('Begin vacuum_all(limit=%s)', limit)
 		self.plugins = self.load_plugins()
 
-		self.session.begin()
+		self.session.begin(subtransactions=True)
 		
 		ts = self.term_stat('SupplierCatalogItemVersion Vacuum', len(self.plugins))
 		
