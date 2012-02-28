@@ -7,11 +7,11 @@ Priority: optional
 Standards-Version: 3.9.2
 
 Package: equivs-bakedpytato
-Version: 2012.02.22.15.50
-Replaces: equivs-bakedpytato (<= 2012.02.22.15.50)
+Version: 2012.02.27.20.57
+Replaces: equivs-bakedpytato (<= 2012.02.27.20.57)
 # Maintainer: Your Name <yourname@example.com>
 # Pre-Depends: <comma-separated list of packages>
-Depends: python2.7, python-ttystatus, python-sqlalchemy (>= 0.7), python-psycopg2, python-chardet, python-migrate, python-bloomfilter
+Depends: python-virtualenv, postgresql-server-dev-9.1, python-dev
 # Recommends: <comma-separated list of packages>
 # Suggests: <comma-separated list of packages>
 # Provides: <comma-separated list of packages>

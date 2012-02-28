@@ -1,4 +1,10 @@
-bakedpytato/bakedpytato/cfg/db.py
-bakedpytato/development.ini
+/turbogears/bakedpytato/cfg/db.py
+/turbogears/development.ini
+/turbogears/bakedpytato.egg-info/
+/turbogears/build/
+/bin/
+/build/
+/include/
+/lib/
 *.pyc
 beaker_data
