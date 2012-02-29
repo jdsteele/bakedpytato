@@ -30,11 +30,9 @@ class BaseTask(object):
 
 	def __init__(self):
 		"""Init"""
-		self.dbsession = DBSession(autocommit=False)
-### self.session shall be deprecated, replaced with dbsession to 
+		self.session = DBSession
+### self.session shall be deprecated, replaced with DBSession to 
 ### avoid confusion with turbogear's cookie sessions
-		self.session = self.dbsession
-
 
 	def term_stat(self, message, count=None):
 		ts = ttystatus.TerminalStatus(period=0.5)
@@ -46,19 +44,20 @@ class BaseTask(object):
 		ts.add(ttystatus.Literal(' '))
 		ts.add(ttystatus.PercentDone('done', 'total', decimals=2))
 		ts.add(ttystatus.Literal(' '))
-		#ts.add(ttystatus.Integer('done'))
-		#ts.add(ttystatus.Literal(' of '))
-		#ts.add(ttystatus.Integer('total'))
-		ts.add(ttystatus.ProgressBar('done', 'total'))
-		#ts.add(ttystatus.Literal('  --- '))
-		#ts.add(ttystatus.Literal('  Sub: '))
-		#ts.add(ttystatus.PercentDone('sub_done', 'sub_total', decimals=2))
-		#ts.add(ttystatus.Literal(' '))
-		#ts.add(ttystatus.Integer('sub_done'))
-		#ts.add(ttystatus.Literal(' of '))
-		#ts.add(ttystatus.Integer('sub_total'))
+		ts.add(ttystatus.Integer('done'))
+		ts.add(ttystatus.Literal(' of '))
+		ts.add(ttystatus.Integer('total'))
+		#ts.add(ttystatus.ProgressBar('done', 'total'))
+		#! ProgressBar is inaccurate
+		ts.add(ttystatus.Literal('  --- '))
+		ts.add(ttystatus.Literal('  Sub: '))
+		ts.add(ttystatus.PercentDone('sub_done', 'sub_total', decimals=2))
+		ts.add(ttystatus.Literal(' '))
+		ts.add(ttystatus.Integer('sub_done'))
+		ts.add(ttystatus.Literal(' of '))
+		ts.add(ttystatus.Integer('sub_total'))
 		#ts.add(ttystatus.ProgressBar('sub_done', 'sub_total'))
-		#ts.add(ttystatus.Literal("      \r"))
+		ts.add(ttystatus.Literal("      \r"))
 		
 		if count is not None:
 			ts['total'] = count

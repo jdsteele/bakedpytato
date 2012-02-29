@@ -26,6 +26,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 ### Application Library
 from bakedpytato import cfg
+from bakedpytato.model import DBSession
 from bakedpytato.model import CustomerOrderItemModel, CustomerShipmentItemModel
 from bakedpytato.model import InventoryItemModel
 from bakedpytato.model import ManufacturerModel
@@ -48,8 +49,8 @@ class ProductTask(BaseTask):
 		"""Load All"""
 		logger.debug("Begin load_all()")
 		try:
-			self.session.begin(subtransactions=True)
-			query = self.session.query(SupplierCatalogItemModel)
+			DBSession.begin(subtransactions=True)
+			query = DBSession.query(SupplierCatalogItemModel)
 			query = query.filter(SupplierCatalogItemModel.manufacturer_identifier != None)
 			query = query.filter(SupplierCatalogItemModel.manufacturer_id != None)
 			query = query.filter(SupplierCatalogItemModel.product_identifier != None)
@@ -68,11 +69,11 @@ class ProductTask(BaseTask):
 			for supplier_catalog_item in query.yield_per(1000):
 				self.load_one(supplier_catalog_item)
 				ts['done'] += 1
-			self.session.commit()
+			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			if DBSession.transaction is not None:
+				DBSession.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End load_all()")
@@ -80,8 +81,8 @@ class ProductTask(BaseTask):
 
 	def load_one(self, supplier_catalog_item):
 		"""Load One"""
-		self.session.begin(subtransactions=True)
-		query = self.session.query(ProductModel)
+		DBSession.begin(subtransactions=True)
+		query = DBSession.query(ProductModel)
 		query = query.filter(ProductModel.manufacturer_id == supplier_catalog_item.manufacturer_id)
 		query = query.filter(ProductModel.identifier == supplier_catalog_item.product_identifier)
 		count = query.count()
@@ -90,11 +91,11 @@ class ProductTask(BaseTask):
 			product = ProductModel()
 			product.manufacturer_id = supplier_catalog_item.manufacturer_id
 			product.identifier = supplier_catalog_item.product_identifier
-			self.session.add(product)
+			DBSession.add(product)
 			
 			supplier_catalog_item_task = SupplierCatalogItemTask()
 			supplier_catalog_item_task.update_product(supplier_catalog_item)
-		self.session.commit()
+		DBSession.commit()
 
 
 	def update(self):
@@ -105,19 +106,23 @@ class ProductTask(BaseTask):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		try:
-			self.session.begin(subtransactions=True)
-			query = self.session.query(ProductModel)
+			DBSession.begin(subtransactions=True)
+			query = DBSession.query(ProductModel)
 
 			ts = self.term_stat('Products Update', query.count())
 
-			for product in query.yield_per(1000):
+			for product in query.yield_per(100):
 				self.update_one(product)
+				
+				if ts['done'] % 100 == 0:
+					DBSession.flush()
+				
 				ts['done'] += 1
-			self.session.commit()
+			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			if DBSession.transaction is not None:
+				DBSession.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End update_all()")
@@ -132,7 +137,7 @@ class ProductTask(BaseTask):
 		#	product_package_count
 		#	catalog_item_count
 
-		self.session.begin(subtransactions=True)
+		DBSession.begin(subtransactions=True)
 		
 		self.update_supplier_catalog_items(product)
 		self.update_inventory_items(product)
@@ -150,18 +155,18 @@ class ProductTask(BaseTask):
 		if product.lock_sale is False and product.base_sale > Decimal(0):
 			sale = product.base_sale * (product.ratio / Decimal(100))
 			product.sale = decimal_psych_price(sale, cfg.sale_decimals)
-		self.session.commit()
+		DBSession.commit()
 
 	def sort(self):
-		self.session.begin(subtransactions=True)
+		DBSession.begin(subtransactions=True)
 		try:
 			logger.info("Caching Manufacturers...")
 			manufacturers = dict()
-			query = self.session.query(ManufacturerModel)
+			query = DBSession.query(ManufacturerModel)
 			for manufacturer in query:
 				manufacturers[manufacturer.id] = manufacturer.name
 
-			query = self.session.query(ProductModel)
+			query = DBSession.query(ProductModel)
 			query = query.order_by(ProductModel.sort)
 			
 			sorttable = list()
@@ -187,23 +192,23 @@ class ProductTask(BaseTask):
 
 			for x in xrange(len(sorttable)):
 				(product_id, a, b) = sorttable[x]
-				query = self.session.query(ProductModel)
+				query = DBSession.query(ProductModel)
 				#query = query.filter(ProductModel.id == product_id)
 				#product = query.one()
 				product = query.get(product_id)
 				product.sort = x
 				ts['done'] += 1
-			self.session.commit()
+			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			if DBSession.transaction is not None:
+				DBSession.rollback()
 		finally:
 			ts.finish()
 
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""
-		self.session.begin(subtransactions=True)
+		DBSession.begin(subtransactions=True)
 		data = self.get_supplier_catalog_item(product)
 		
 		#product.set_debug(True)
@@ -234,13 +239,13 @@ class ProductTask(BaseTask):
 		else:
 			product.supplier_catalog_item_id = None
 			product.supplier_special = False
-		self.session.commit()
+		DBSession.commit()
 
 
 	def update_inventory_items(self, product):
 		"""Update Inventory Items"""
-		self.session.begin(subtransactions=True)
-		query = self.session.query(InventoryItemModel)
+		DBSession.begin(subtransactions=True)
+		query = DBSession.query(InventoryItemModel)
 		query = query.filter(InventoryItemModel.product_id == product.id)
 		product.inventory_item_count = query.count()
 		
@@ -250,21 +255,21 @@ class ProductTask(BaseTask):
 			quantity += inventory_item.quantity
 		
 		product.stock = quantity
-		self.session.commit()
+		DBSession.commit()
 
 
 	def update_customer_order_items(self, product):
 		"""Update Customer Order Items"""
-		self.session.begin(subtransactions=True)
-		query = self.session.query(CustomerOrderItemModel)
+		DBSession.begin(subtransactions=True)
+		query = DBSession.query(CustomerOrderItemModel)
 		query = query.filter(CustomerOrderItemModel.product_id == product.id)
 		product.customer_order_item_count = query.count()
 
 		for customer_order_item in query:
-			query2 = self.session.query(CustomerShipmentItemModel)
+			query2 = DBSession.query(CustomerShipmentItemModel)
 			query2 = query.filter(CustomerShipmentItemModel.customer_order_item_id == customer_order_item.id)
 			product.customer_shipment_item_count = query2.count()
-		self.session.commit()
+		DBSession.commit()
 
 
 	def get_supplier_catalog_item(self, product):
@@ -280,7 +285,7 @@ class ProductTask(BaseTask):
 		data['category_id'] = None
 		data['scale_id'] = None
 		
-		query = self.session.query(SupplierCatalogItemModel)
+		query = DBSession.query(SupplierCatalogItemModel)
 		query = query.filter(SupplierCatalogItemModel.product_id == product.id)
 		query = query.filter(SupplierCatalogItemModel.rank > 0)
 		query.order_by(asc(SupplierCatalogItemModel.rank))
