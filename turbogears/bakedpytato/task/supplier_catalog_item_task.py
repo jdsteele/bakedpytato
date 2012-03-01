@@ -72,7 +72,6 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		'available': None,
 		'category_identifier': None,
 		'cost': Decimal(0),
-		'legacy_flag': 128,
 		'name': None,
 		'phased_out': False,
 		'retail': Decimal(0),
@@ -232,14 +231,14 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		ts = self.term_stat('SupplierCatalogItem Update')
 		start_time = datetime.now()
 		try:
-			s = ScalableBloomFilter()
-			query = self.session.query(
-				SupplierCatalogItemFieldModel.supplier_id,
-				SupplierCatalogItemFieldModel.manufacturer_identifier,
-				SupplierCatalogItemFieldModel.product_identifier,
-			)
-			for row in query.yield_per(1000):
-				s.add(row)
+			#s = ScalableBloomFilter()
+			#query = self.session.query(
+			#	SupplierCatalogItemFieldModel.supplier_id,
+			#	SupplierCatalogItemFieldModel.manufacturer_identifier,
+			#	SupplierCatalogItemFieldModel.product_identifier,
+			#)
+			#for row in query.yield_per(1000):
+			#	s.add(row)
 			
 			query = self.session.query(SupplierCatalogItemModel)
 
@@ -257,15 +256,15 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 					supplier_catalog_item.manufacturer_identifier,
 					supplier_catalog_item.product_identifier,
 				)
-				if row not in s:
-					logger.info(
-						"Not found in SupplierCatalogItemFields %s %s-%s", 
-						supplier_catalog_item.supplier_id,
-						supplier_catalog_item.manufacturer_identifier,
-						supplier_catalog_item.product_identifier
-					)
+				#if row not in s:
+				#	logger.info(
+				#		"Not found in SupplierCatalogItemFields %s %s-%s", 
+				#		supplier_catalog_item.supplier_id,
+				#		supplier_catalog_item.manufacturer_identifier,
+				#		supplier_catalog_item.product_identifier
+				#	)
 					## TODO Maybe only not do load from SCIV?
-					continue
+				#	continue
 
 				self.update_one(supplier_catalog_item)
 				ts['done'] += 1
@@ -339,6 +338,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		if self.latest_supplier_catalog_id is None:
 			logger.error("No Latest SupplierCatalog Found for Supplier.id %s", supplier_catalog_item.supplier_id)
 			## TODO: What should we be doing here? setting some sort of defaults?
+			supplier_catalog_item.legacy_flag = 20
 			return
 
 		query = self.session.query(SupplierCatalogItemFieldModel.id)
@@ -346,23 +346,27 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 		query = query.filter(SupplierCatalogItemFieldModel.manufacturer_identifier == supplier_catalog_item.manufacturer_identifier)
 		query = query.filter(SupplierCatalogItemFieldModel.product_identifier == supplier_catalog_item.product_identifier)
 	
-		s = set()
-		for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
-			s.add(supplier_catalog_item_field_id)
+		data = None
+	
+		if query.count() > 0:
+	
+			s = set()
+			for (supplier_catalog_item_field_id, ) in query.yield_per(1000):
+				s.add(supplier_catalog_item_field_id)
 
-		del query
+			del query
 
-		if plug.opaque() is True:
-			if plug.ghost() is True:
-				data = self.coalesce_opaque_ghost(VersionModel, s, plug)
+			if plug.opaque() is True:
+				if plug.ghost() is True:
+					data = self.coalesce_opaque_ghost(VersionModel, s, plug)
+				else:
+					data = self.coalesce_opaque_noghost(VersionModel, s)
 			else:
-				data = self.coalesce_opaque_noghost(VersionModel, s)
-		else:
-			if plug.ghost() is True:
-				data = self.coalesce_translucent_ghost(VersionModel, s)
-			else:
-				data = self.coalesce_translucent_noghost(VersionModel, s)
-		#print "DATA IN", data
+				if plug.ghost() is True:
+					data = self.coalesce_translucent_ghost(VersionModel, s)
+				else:
+					data = self.coalesce_translucent_noghost(VersionModel, s)
+			#print "DATA IN", data
 		
 		if data is None:
 			logger.warning(
@@ -372,6 +376,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 				supplier_catalog_item.product_identifier,
 			)
 			## TODO What should we do here?
+			supplier_catalog_item.legacy_flag = 30
 			return
 		
 		for (key, value) in self.defaults.iteritems():
@@ -400,6 +405,8 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 
 		for (field_name, item_name) in f.iteritems():
 			setattr(supplier_catalog_item, item_name, data[field_name])
+		
+		supplier_catalog_item.legacy_flag = 40
 
 
 	def coalesce_opaque_noghost(self, VersionModel, s, get_effective=False):
