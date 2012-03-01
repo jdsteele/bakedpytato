@@ -19,9 +19,10 @@ import logging
 import re
 from decimal import Decimal
 from datetime import datetime, timedelta
+import transaction
 
 ###Extended Library
-from pybloom import ScalableBloomFilter
+from pybloom import BloomFilter
 from sqlalchemy.orm.exc import NoResultFound
 
 ###Application Library
@@ -59,12 +60,12 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 	def update_all(self, limit=None, time_limit=None):
 		"""Update All"""
 		logger.debug("Begin update_all(limit=%s)", limit)
-		self.session.begin(subtransactions=True)
+		transaction.begin()
 		self.ts = self.term_stat('SupplierCatalogItemField Update')
 		start_time = datetime.now()
 		try:
 			self.plugins = self.load_plugins()
-			query = self.session.query(SupplierCatalogItemFieldModel)
+			query = DBSession.query(SupplierCatalogItemFieldModel)
 			if limit is not None:
 				query = query.order_by(SupplierCatalogItemFieldModel.updated)
 				query = query.limit(limit)
@@ -72,17 +73,16 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			for supplier_catalog_item_field in query.yield_per(10000):
 				self.update_one(supplier_catalog_item_field)
 				if self.ts['done'] % 10000 == 0:
-					self.session.flush()
+					DBSession.flush()
 				if time_limit is not None:
 					if datetime.now() > start_time + time_limit:
 						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
 						break;
 				self.ts['done'] += 1
-			self.session.commit()
+			transaction.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			transaction.abort()
 		finally:
 			self.ts.finish()
 		logger.debug("End update_all()")
@@ -137,19 +137,20 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 		self.ts = self.term_stat('SupplierCatalogItemFields Vacuum', len(self.plugins))
 		now = start_time = datetime.now()
 		try:
-			self.session.begin()
+			transaction.begin()
 			for plug in self.plugins.itervalues():
 				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 				model_name = plug.version_model()  + 'Model'
 				VersionModel = getattr(model, model_name)
 				
-				#s = set()
-				s = ScalableBloomFilter()
-				query = self.session.query(VersionModel.supplier_catalog_item_field_id)
+				query = DBSession.query(VersionModel.supplier_catalog_item_field_id)
+				s = BloomFilter(capacity=query.count() + 1)
+				self.ts['sub_total'] = query.count()
 				for (supplier_catalog_item_field_id, )  in query.yield_per(100):
 					s.add(supplier_catalog_item_field_id)
+					self.ts['sub_done'] += 1
 				
-				query = self.session.query(SupplierCatalogItemFieldModel)
+				query = DBSession.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
 				if unupdated is not True:
 					query = query.filter(SupplierCatalogItemFieldModel.updated != None)
@@ -158,35 +159,27 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					query = query.order_by(SupplierCatalogItemFieldModel.vacuumed)
 					query = query.limit(limit)
 					logger.debug("LIMIT %i, supplier_catalog_filter_id %s", limit, supplier_catalog_filter_id)
-				
 				self.ts['sub_done'] = 0
+				self.ts['sub_total'] = query.count()
 				for supplier_catalog_item_field in query.yield_per(100):
-					#count = self.vacuum_count(supplier_catalog_item_field, VersionModel)
-					#if count > 0:
-						#supplier_catalog_item_field.supplier_catalog_item_version_count = count
-						#supplier_catalog_item_field.vacuumed = now
-					#else:
 					if supplier_catalog_item_field.id not in s:
 						logger.debug("Deleting SupplierCatalogItemField %s", supplier_catalog_item_field.id)
-						#self.session.delete(supplier_catalog_item_field)
+						DBSession.delete(supplier_catalog_item_field)
+					else:
+						supplier_catalog_item_field.vacuumed = now
 					self.ts['sub_done'] += 1
-					if time_limit is not None:
-						if datetime.now() > start_time + time_limit:
-							logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
-							break;
+				DBSession.flush()
+				if time_limit is not None:
+					if datetime.now() > start_time + time_limit:
+						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						transaction.commit()
+						break;
+
 				self.ts['done'] += 1
-			self.session.commit()
+			transaction.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			transaction.abort()
 		finally:
 			self.ts.finish()
 		logger.debug('End vacuum()')
-
-	def vacuum_count(self, supplier_catalog_item_field, VersionModel):
-		query = self.session.query(VersionModel)
-		query = query.filter(VersionModel.supplier_catalog_item_field_id == supplier_catalog_item_field.id)
-		count = query.count()
-		logger.debug("supplier_catalog_item_field %s, count %i", supplier_catalog_item_field.id, count)
-		return count
