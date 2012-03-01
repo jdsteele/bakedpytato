@@ -167,6 +167,8 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 						DBSession.delete(supplier_catalog_item_field)
 					else:
 						supplier_catalog_item_field.vacuumed = now
+					if self.ts['sub_done'] % 1000 == 0:
+						DBSession.flush()
 					self.ts['sub_done'] += 1
 				DBSession.flush()
 				if time_limit is not None:
