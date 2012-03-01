@@ -127,7 +127,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')
-		self.vacuum_all(limit=1000000, time_limit=timedelta(hours=1))
+		self.vacuum_all(limit=100000, time_limit=timedelta(hours=1))
 		logger.debug('End vacuum()')
 
 	def vacuum_all(self, limit=None, time_limit=None, unupdated=False):
@@ -176,7 +176,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				DBSession.flush()
 				if time_limit is not None:
 					if datetime.now() > start_time + time_limit:
-						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						logger.info("Reached Time Limit at %i of %i", self.ts['done'], self.ts['total'])
 						transaction.commit()
 						break;
 				self.ts['done'] += 1
