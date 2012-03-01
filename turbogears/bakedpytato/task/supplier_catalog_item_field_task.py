@@ -79,6 +79,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
 						break;
 				self.ts['done'] += 1
+			query.close()
 			transaction.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
@@ -149,6 +150,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 				for (supplier_catalog_item_field_id, )  in query.yield_per(100):
 					s.add(supplier_catalog_item_field_id)
 					self.ts['sub_done'] += 1
+				query.close()
 				
 				query = DBSession.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
@@ -170,13 +172,13 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					if self.ts['sub_done'] % 1000 == 0:
 						DBSession.flush()
 					self.ts['sub_done'] += 1
+				query.close()
 				DBSession.flush()
 				if time_limit is not None:
 					if datetime.now() > start_time + time_limit:
 						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
 						transaction.commit()
 						break;
-
 				self.ts['done'] += 1
 			transaction.commit()
 		except Exception:
