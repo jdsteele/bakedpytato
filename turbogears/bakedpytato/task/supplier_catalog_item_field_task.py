@@ -79,7 +79,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
 						break;
 				self.ts['done'] += 1
-			query.close()
+			del query
 			transaction.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
@@ -141,17 +141,19 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			transaction.begin()
 			for plug in self.plugins.itervalues():
 				supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+				
+				### Generate a bloom filter set of SCIF id's in VersionModel
 				model_name = plug.version_model()  + 'Model'
 				VersionModel = getattr(model, model_name)
-				
 				query = DBSession.query(VersionModel.supplier_catalog_item_field_id)
 				s = BloomFilter(capacity=query.count() + 1)
 				self.ts['sub_total'] = query.count()
 				for (supplier_catalog_item_field_id, )  in query.yield_per(100):
 					s.add(supplier_catalog_item_field_id)
 					self.ts['sub_done'] += 1
-				query.close()
+				del query
 				
+				### Iterate through SCIFields, deleting any that don't appear in the bloom filter.
 				query = DBSession.query(SupplierCatalogItemFieldModel)
 				query = query.filter(SupplierCatalogItemFieldModel.supplier_catalog_filter_id == supplier_catalog_filter_id)
 				if unupdated is not True:
@@ -172,7 +174,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					if self.ts['sub_done'] % 1000 == 0:
 						DBSession.flush()
 					self.ts['sub_done'] += 1
-				query.close()
+				del query
 				DBSession.flush()
 				if time_limit is not None:
 					if datetime.now() > start_time + time_limit:
