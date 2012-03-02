@@ -18,6 +18,8 @@ from __future__ import unicode_literals
 import logging 
 import uuid
 from decimal import Decimal
+import transaction
+from datetime import datetime, timedelta
 
 ### Extended Library
 import ttystatus
@@ -48,8 +50,8 @@ class ProductTask(BaseTask):
 	def load_all(self):
 		"""Load All"""
 		logger.debug("Begin load_all()")
+		tx = transaction.get()
 		try:
-			DBSession.begin(subtransactions=True)
 			query = DBSession.query(SupplierCatalogItemModel)
 			query = query.filter(SupplierCatalogItemModel.manufacturer_identifier != None)
 			query = query.filter(SupplierCatalogItemModel.manufacturer_id != None)
@@ -69,11 +71,9 @@ class ProductTask(BaseTask):
 			for supplier_catalog_item in query.yield_per(1000):
 				self.load_one(supplier_catalog_item)
 				ts['done'] += 1
-			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if DBSession.transaction is not None:
-				DBSession.rollback()
+			tx.abort()
 		finally:
 			ts.finish()
 		logger.debug("End load_all()")
@@ -81,7 +81,6 @@ class ProductTask(BaseTask):
 
 	def load_one(self, supplier_catalog_item):
 		"""Load One"""
-		DBSession.begin(subtransactions=True)
 		query = DBSession.query(ProductModel)
 		query = query.filter(ProductModel.manufacturer_id == supplier_catalog_item.manufacturer_id)
 		query = query.filter(ProductModel.identifier == supplier_catalog_item.product_identifier)
@@ -95,34 +94,38 @@ class ProductTask(BaseTask):
 			
 			supplier_catalog_item_task = SupplierCatalogItemTask()
 			supplier_catalog_item_task.update_product(supplier_catalog_item)
-		DBSession.commit()
 
 
 	def update(self):
-		self.update_all()
+		self.update_all(limit=10000, time_limit=timedelta(hours=1))
 
 
-	def update_all(self):
+	def update_all(self, limit, time_limit):
 		"""Update All"""
 		logger.debug("Begin update_all()")
+		ts = self.term_stat('Products Update')
+		start_time = datetime.now()
+		tx = transaction.get()
 		try:
-			DBSession.begin(subtransactions=True)
 			query = DBSession.query(ProductModel)
+			if limit is not None:
+				query = query.order_by(ProductModel.updated.nullsfirst())
+				query = query.limit(limit)
 
-			ts = self.term_stat('Products Update', query.count())
+			ts['total'] = query.count()
 
 			for product in query.yield_per(100):
 				self.update_one(product)
-				
 				if ts['done'] % 100 == 0:
 					DBSession.flush()
-				
+				if time_limit is not None:
+					if datetime.now() > start_time + time_limit:
+						logger.info("Reached Time Limit at %i of %i", ts['done'], ts['total'])
+						break;
 				ts['done'] += 1
-			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if DBSession.transaction is not None:
-				DBSession.rollback()
+			tx.abort()
 		finally:
 			ts.finish()
 		logger.debug("End update_all()")
@@ -136,8 +139,6 @@ class ProductTask(BaseTask):
 		#	product_conversion_count
 		#	product_package_count
 		#	catalog_item_count
-
-		DBSession.begin(subtransactions=True)
 		
 		self.update_supplier_catalog_items(product)
 		self.update_inventory_items(product)
@@ -155,10 +156,9 @@ class ProductTask(BaseTask):
 		if product.lock_sale is False and product.base_sale > Decimal(0):
 			sale = product.base_sale * (product.ratio / Decimal(100))
 			product.sale = decimal_psych_price(sale, cfg.sale_decimals)
-		DBSession.commit()
+		product.updated = datetime.now()
 
 	def sort(self):
-		DBSession.begin(subtransactions=True)
 		try:
 			logger.info("Caching Manufacturers...")
 			manufacturers = dict()
@@ -198,17 +198,14 @@ class ProductTask(BaseTask):
 				product = query.get(product_id)
 				product.sort = x
 				ts['done'] += 1
-			DBSession.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if DBSession.transaction is not None:
-				DBSession.rollback()
+			transaction.abort()
 		finally:
 			ts.finish()
 
 	def update_supplier_catalog_items(self, product):
 		"""Update Supplier Catalog Items"""
-		DBSession.begin(subtransactions=True)
 		data = self.get_supplier_catalog_item(product)
 		
 		#product.set_debug(True)
@@ -239,12 +236,10 @@ class ProductTask(BaseTask):
 		else:
 			product.supplier_catalog_item_id = None
 			product.supplier_special = False
-		DBSession.commit()
 
 
 	def update_inventory_items(self, product):
 		"""Update Inventory Items"""
-		DBSession.begin(subtransactions=True)
 		query = DBSession.query(InventoryItemModel)
 		query = query.filter(InventoryItemModel.product_id == product.id)
 		product.inventory_item_count = query.count()
@@ -255,12 +250,10 @@ class ProductTask(BaseTask):
 			quantity += inventory_item.quantity
 		
 		product.stock = quantity
-		DBSession.commit()
 
 
 	def update_customer_order_items(self, product):
 		"""Update Customer Order Items"""
-		DBSession.begin(subtransactions=True)
 		query = DBSession.query(CustomerOrderItemModel)
 		query = query.filter(CustomerOrderItemModel.product_id == product.id)
 		product.customer_order_item_count = query.count()
@@ -269,13 +262,11 @@ class ProductTask(BaseTask):
 			query2 = DBSession.query(CustomerShipmentItemModel)
 			query2 = query.filter(CustomerShipmentItemModel.customer_order_item_id == customer_order_item.id)
 			product.customer_shipment_item_count = query2.count()
-		DBSession.commit()
 
 
 	def get_supplier_catalog_item(self, product):
 		"""Get Supplier Catalog Item"""
 		#print "Product", product.id
-		
 		data = dict()
 		
 		data['phased_out'] = False

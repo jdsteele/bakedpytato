@@ -27,6 +27,7 @@ from paste.deploy import appconfig
 from bakedpytato.config.environment import load_environment
 from bakedpytato import model
 
+import transaction
 
 def load_config(filename):
     conf = appconfig('config:' + os.path.abspath(filename))
@@ -43,16 +44,24 @@ def main():
 	while(True):
 
 		task.SupplierCatalogTask().load()
+		transaction.commit()
 		task.SupplierCatalogTask().update()
+		transaction.commit()
 
 		task.SupplierCatalogItemVersionTask().load()
+		transaction.commit()
 		task.SupplierCatalogItemVersionTask().vacuum()
+		transaction.commit()
 
 		task.SupplierCatalogItemFieldTask().update()
+		transaction.commit()
 		task.SupplierCatalogItemFieldTask().vacuum()
+		transaction.commit()
 
 		task.SupplierCatalogItemTask().load()
+		transaction.commit()
 		task.SupplierCatalogItemTask().update()
+		transaction.commit()
 		#task.SupplierCatalogItemTask().vacuum()
 		
 		#task.InventoryItemTask().load()
@@ -60,8 +69,11 @@ def main():
 		#sleep(60)
 		
 		task.ProductTask().load()
+		transaction.commit()
 		task.ProductTask().update()
+		transaction.commit()
 		task.ProductTask().sort()
+		transaction.commit()
 
 		#task.ProductDailyStat().load()
 		#task.ProductWeeklyStat().load()

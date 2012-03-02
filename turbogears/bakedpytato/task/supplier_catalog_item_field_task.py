@@ -67,7 +67,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 			self.plugins = self.load_plugins()
 			query = DBSession.query(SupplierCatalogItemFieldModel)
 			if limit is not None:
-				query = query.order_by(SupplierCatalogItemFieldModel.updated)
+				query = query.order_by(SupplierCatalogItemFieldModel.updated.nullsfirst())
 				query = query.limit(limit)
 			self.ts['total'] = query.count()
 			for supplier_catalog_item_field in query.yield_per(10000):
@@ -160,7 +160,7 @@ class SupplierCatalogItemFieldTask(BaseSupplierCatalogTask):
 					query = query.filter(SupplierCatalogItemFieldModel.updated != None)
 				
 				if limit is not None:
-					query = query.order_by(SupplierCatalogItemFieldModel.vacuumed)
+					query = query.order_by(SupplierCatalogItemFieldModel.vacuumed.nullsfirst())
 					query = query.limit(limit)
 					logger.debug("LIMIT %i, supplier_catalog_filter_id %s", limit, supplier_catalog_filter_id)
 				self.ts['sub_done'] = 0

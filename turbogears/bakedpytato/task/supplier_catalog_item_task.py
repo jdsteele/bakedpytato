@@ -245,7 +245,7 @@ class SupplierCatalogItemTask(BaseSupplierCatalogTask):
 			if modified_since:
 				query = query.filter(SupplierCatalogItemModel.modified >= modified_since)
 			if limit:
-				query = query.order_by(SupplierCatalogItemModel.updated)
+				query = query.order_by(SupplierCatalogItemModel.updated.nullsfirst())
 				query = query.limit(limit)
 
 			ts['total'] = query.count()

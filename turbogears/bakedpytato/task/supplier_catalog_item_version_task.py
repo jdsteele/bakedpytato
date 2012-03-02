@@ -67,7 +67,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			if alt_query.count() > 0:
 				query = alt_query.order_by(desc(SupplierCatalogModel.issue_date))
 			else:
-				query = query.order_by(SupplierCatalogModel.supplier_catalog_item_versions_loaded)
+				query = query.order_by(SupplierCatalogModel.supplier_catalog_item_versions_loaded.nullsfirst())
 			del alt_query
 
 			if supplier_id is not None:
@@ -246,7 +246,7 @@ class SupplierCatalogItemVersionTask(BaseSupplierCatalogTask):
 			VersionModel = getattr(model, model_name)
 			query = self.session.query(VersionModel)
 			if limit:
-				query = query.order_by(VersionModel.vacuumed)
+				query = query.order_by(VersionModel.vacuumed.nullsfirst())
 				query = query.limit(limit)
 
 			ts['sub_done'] = 0

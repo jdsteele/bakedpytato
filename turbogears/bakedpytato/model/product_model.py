@@ -64,7 +64,6 @@ class ProductModel(BaseModel, DefaultMixin):
 	sale = base_sale * (ratio / 100)
 	useful for applying or cancelling discounts to specific products
 	"""
-	
 	retail = Column(Numeric, default=Decimal(0))
 	sale = Column(Numeric, default=Decimal(0))
 	"""Sale price from SupplierCatalogItem after applying ratio"""
@@ -80,6 +79,7 @@ class ProductModel(BaseModel, DefaultMixin):
 	supplier_shipment_item_count = Column(Integer, default=0)
 	supplier_special = Column(Boolean, default=False)
 	supplier_stock = Column(Boolean, default=False)
+	updated = Column(DateTime)
 	url = Column(String)
 
 	### Relations
