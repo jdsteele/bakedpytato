@@ -100,7 +100,7 @@ class ProductTask(BaseTask):
 		self.update_all(limit=10000, time_limit=timedelta(hours=1))
 
 
-	def update_all(self, limit, time_limit):
+	def update_all(self, limit=None, time_limit=None):
 		"""Update All"""
 		logger.debug("Begin update_all()")
 		ts = self.term_stat('Products Update')
