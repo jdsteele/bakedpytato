@@ -23,10 +23,10 @@ from bakedpytato.model import metadata, DBSession
 class SupplierSpecialFilterModel(BaseModel, UUIDMixin):
 	__tablename__ = 'supplier_special_filters'
 
-	#supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
 	name = Column(String)
 	#ghost_stock = Column(Boolean, default=False)
 	#ghost_phased_out = Column(Boolean, default=False)
 	#ghost_advanced = Column(Boolean, default=True)
-	#version_model = Column(String)
+	version_model = Column(String)
 	#opaque = Column(Boolean, default=True)

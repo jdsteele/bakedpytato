@@ -74,11 +74,22 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
+		result = False
 		if re.search('exactrail', file_import.name):
-			return True
-		if re.search('exact_rail', file_import.name):
-			return True
-		if re.match('20\d{6}\.csv', file_import.name):
+			result = True
+		elif re.search('exact_rail', file_import.name):
+			result = True
+		elif re.match('20\d{6}\.csv', file_import.name):
+			result = True
+		if result is True:
+			magic = file_import.magic()
+			if magic['mime'] != 'text/plain':
+				return False
+			if magic['magic'] not in [
+				'ASCII text',
+				'ASCII text, with CRLF, CR line terminators'
+			]:
+				return False
 			return True
 		return False
 		
@@ -179,9 +190,9 @@ class SupplierCatalogExactrailPlugin(BaseSupplierCatalogPlugin):
 			
 
 		if 'STOCK' in fields and fields['STOCK'] is not None:
-			if fields['STOCK'] in ['OOS', 'In Stock', '< 25 Call', '< 25 call', 'Pre-Order', 'Announced']:
+			if fields['STOCK'] in ['OOS', 'In Stock', '< 25 Call', '< 25 call', 'Pre-Order', 'Announced', 'Adv Purch']:
 				data['stock'] = (fields['STOCK'] in ['In Stock', '** NEW **'])
-				data['advanced'] = (fields['STOCK'] in ['Pre-Order', 'Announced'])
+				data['advanced'] = (fields['STOCK'] in ['Pre-Order', 'Announced', 'Adv Purch'])
 			else:
 				logger.error("Field INSTOCK has unexpected value %s", fields['STOCK'])
 				data['stock'] = False

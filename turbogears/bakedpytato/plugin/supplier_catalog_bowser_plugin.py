@@ -66,9 +66,17 @@ class SupplierCatalogBowserPlugin(BaseSupplierCatalogPlugin):
 			return False
 		if not re.search('DealerOutsideWebExport', file_import.name):
 			return False
-		if re.search('Bowser', file_import.content[:1000]):
-			return True
-		return False
+		magic = file_import.magic()
+		if magic['mime'] != 'text/plain':
+			return False
+		if magic['magic'] not in [
+			'Non-ISO extended-ASCII text',
+			'Non-ISO extended-ASCII text, with CRLF line terminators'
+		]:
+			return False
+		if not re.search('Bowser', file_import.content[:1000]):
+			return False
+		return True
 
 	def get_encoding(self, supplier_catalog):
 		"""Subclass Me"""

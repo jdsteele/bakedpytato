@@ -21,7 +21,6 @@ setup(
         "toscawidgets >= 0.9.7.1",
         "zope.sqlalchemy >= 0.4 ",
         "repoze.tm2 >= 1.0a4",
-        
         "repoze.what-quickstart >= 1.0",
         "chardet",
         "ttystatus",
@@ -30,6 +29,7 @@ setup(
         "argparse",
         "genshi",
         "tw.jquery",
+        "python-magic"
                 ],
     setup_requires=["PasteScript >= 1.7"],
     paster_plugins=['PasteScript', 'Pylons', 'TurboGears2', 'tg.devtools'],

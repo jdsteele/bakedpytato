@@ -8,4 +8,5 @@ class ProductSearchForm(TableForm):
 
 	class fields(WidgetsList):
 		identifier = TextField()
+
 product_search_form = ProductSearchForm("product_search_form", action='page')

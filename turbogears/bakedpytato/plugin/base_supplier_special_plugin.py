@@ -71,8 +71,8 @@ class BaseSupplierSpecialPlugin(BasePlugin):
 	def supplier_special_filter_id(self):
 		return self.supplier_special_filter.id
 
-	#def version_model(self):
-		#return self.supplier_catalog_filter.version_model
+	def version_model(self):
+		return self.supplier_special_filter.version_model
 		
 	def effective_dates(self, file_import):
 		"""Subclass Me"""

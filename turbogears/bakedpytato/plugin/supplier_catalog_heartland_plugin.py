@@ -117,9 +117,14 @@ class SupplierCatalogHeartlandPlugin(BaseSupplierCatalogPlugin):
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
-		if re.search('hhwonhand-\d{14}.csv', file_import.name):
-			return True
-		return False
+		if not re.search('hhwonhand-\d{14}.csv', file_import.name):
+			return False
+		magic = file_import.magic()
+		if magic['mime'] != 'text/plain':
+			return False
+		if magic['magic'] != 'ISO-8859 text, with CRLF line terminators':
+			return False
+		return True
 		
 	def get_items(self, supplier_catalog):
 		expected_row_len = len(self.column_names)

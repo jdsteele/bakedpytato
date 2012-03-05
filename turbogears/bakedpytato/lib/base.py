@@ -7,6 +7,7 @@ from tg.render import render
 from tg import request
 from pylons.i18n import _, ungettext, N_
 from tw.api import WidgetBunch
+from tw.jquery import jquery_js
 import bakedpytato.model as model
 
 __all__ = ['Controller', 'BaseController']
@@ -29,4 +30,5 @@ class BaseController(TGController):
 
         request.identity = request.environ.get('repoze.who.identity')
         tmpl_context.identity = request.identity
+        jquery_js.inject()
         return TGController.__call__(self, environ, start_response)

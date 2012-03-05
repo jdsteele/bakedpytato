@@ -9,7 +9,7 @@
 	Redistributions of files must retain the above copyright notice.
 
 	@copyright     Copyright 2010-2012, John David Steele (john.david.steele@gmail.com)
-	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)'cmp-
+	@license       MIT License (http://www.opensource.org/licenses/mit-license.php)
 """
 #Pragma
 from __future__ import unicode_literals
@@ -69,9 +69,18 @@ class SupplierCatalogWalthersPlugin(BaseSupplierCatalogPlugin):
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
+		result = False
 		if re.search(r'walthers/{1,2}CatalogUpdate[ -]20\d{6}', file_import.name):
-			return True
-		if re.match(r'CatalogUpdate[ -]20\d{6}', file_import.name):
+			result = True
+		elif re.match(r'CatalogUpdate[ -]20\d{6}', file_import.name):
+			result = True
+		
+		if result is True:
+			magic = file_import.magic()
+			if magic['mime'] != 'application/octet-stream':
+				return False
+			if magic['encoding'] != 'binary':
+				return False
 			return True
 		return False
 

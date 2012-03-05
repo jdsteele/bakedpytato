@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, LargeBinary
 from sqlalchemy.orm import deferred
 from sqlalchemy.dialects.postgresql import UUID
+import magic
 
 from bakedpytato.model.base_model import BaseModel, DefaultMixin
 from bakedpytato.model import metadata, DBSession
@@ -32,3 +33,13 @@ class FileImportModel(BaseModel, DefaultMixin):
 	supplier_catalog_count = Column(Integer, default=0)
 	mutable = Column(Boolean, default=True)
 	lock_issue_date = Column(Boolean, default=False)
+	
+	_magic = None
+
+	def magic(self):
+		if self._magic is None:
+			self._magic = dict()
+			self._magic['magic'] = magic.Magic().from_buffer(self.content)
+			self._magic['mime'] = magic.Magic(mime=True).from_buffer(self.content)
+			self._magic['encoding'] = magic.Magic(mime_encoding=True).from_buffer(self.content)
+		return self._magic

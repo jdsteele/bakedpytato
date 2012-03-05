@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<xi:include href="master.html" />
+
+	<head>
+		<meta content="text/html; charset=UTF-8" http-equiv="content-type" py:replace="''"/>
+		<title>Products Index</title>
+	</head>
+	<body>
+		<form id="sform">
+			${tmpl_context.manufacturer_select()}
+			<label for="manufacturer_id">Manufacturer</label>
+			<input type="text" name="identifier" id="identifier" value=""/>
+			<label for="identifier_id">Identifier</label>
+			<input type="text" name="name" id="name" value=""/>
+			<label for="name">Name</label>
+			${tmpl_context.scale_select()}
+			<label for="scale_id">Scale</label>
+			<!--${tmpl_context.category_select()}-->
+			<fieldset>
+				<input type="checkbox" name="enabled" id="enabled" value="true" checked="true"/>
+				<label for="enabled">Enabled</label>
+				<input type="checkbox" name="not_enabled" id="not_enabled" value="true" />
+				<label for="not_enabled">Disabled</label>
+			</fieldset>
+			<fieldset>
+				<input type="checkbox" name="archived" id="archived" value="true"/>
+				<label for="archived">Archived</label>
+				<input type="checkbox" name="not_archived" id="not_archived" value="true" checked="true"/>
+				<label for="not_archived">Not Archived</label>
+			</fieldset>
+			<fieldset>
+				<input type="checkbox" name="in_stock" id="in_stock" value="true" checked="true"/>
+				<label for="archived">In Stock</label>
+				<input type="checkbox" name="out_of_stock" id="out_of_stock" value="true" checked="true"/>
+				<label for="not_archived">Out Of Stock</label>
+			</fieldset>
+
+			<fieldset>
+				<input type="checkbox" name="force_in_stock" id="force_in_stock" value="true" checked="true"/>
+				<label for="force_in_stock">Forced In Stock</label>
+				<input type="checkbox" name="not_force_in_stock" id="not_force_in_stock" value="true" checked="true"/>
+				<label for="not_force_in_stock">Not Forced In Stock</label>
+			</fieldset>
+
+
+			<input type="submit" value="Submit" />
+		</form>
+		${tmpl_context.product_grid()}
+	</body>
+	<script type="text/javascript">
+		$('#sform').submit(function (){
+			var dt = $('#sform').serializeArray();
+			$('#product_grid').flexOptions({newp: 1, params:dt}).flexReload();
+			return false;
+		});
+	</script>
+</html>

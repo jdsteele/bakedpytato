@@ -15,23 +15,17 @@
 #Pragma
 from __future__ import unicode_literals
 
-from bakedpytato import task
-
 from time import sleep
 
 import os
 import sys
+import subprocess
 from argparse import ArgumentParser
 
-from paste.deploy import appconfig
-from bakedpytato.config.environment import load_environment
-from bakedpytato import model
 
-import transaction
-
-def load_config(filename):
-    conf = appconfig('config:' + os.path.abspath(filename))
-    load_environment(conf.global_conf, conf.local_conf)
+#def load_config(filename):
+    #conf = appconfig('config:' + os.path.abspath(filename))
+    #load_environment(conf.global_conf, conf.local_conf)
 
 def parse_args():
     parser = ArgumentParser(description=__doc__)
@@ -40,51 +34,43 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	load_config(args.conf_file)
+	#load_config(args.conf_file)
+	
+	cmd = 'bakedpytato/bin/runner.py'
+	
+	tasks = [
+		['SupplierCatalogTask', 'load'],
+		['SupplierCatalogTask', 'update'],
+		['SupplierCatalogItemVersionTask', 'load'],
+		['SupplierCatalogItemVersionTask', 'vacuum'],
+		['SupplierCatalogItemFieldTask', 'update'],
+		['SupplierCatalogItemFieldTask', 'vacuum'],
+		['SupplierCatalogItemTask', 'load'],
+		['SupplierCatalogItemTask', 'update'],
+		#['SupplierCatalogItemTask', 'vacuum'],
+		#['InventoryItemTask', 'load'],
+		['ProductTask', 'load'],
+		['ProductTask', 'update'],
+		['ProductTask', 'sort'],
+
+		##task.ProductDailyStat().load()
+		##task.ProductWeeklyStat().load()
+		##task.ProductMonthlyStat().load()
+		##task.ProductYearlyStat().load()
+
+		##task.ProductPackageTask.update()
+		
+		##task.CatalogTask().load()
+		##task.CatalogCategoryTask().load()
+		##task.CatalogTask().update()
+	]
+
 	while(True):
-
-		task.SupplierCatalogTask().load()
-		transaction.commit()
-		task.SupplierCatalogTask().update()
-		transaction.commit()
-
-		task.SupplierCatalogItemVersionTask().load()
-		transaction.commit()
-		task.SupplierCatalogItemVersionTask().vacuum()
-		transaction.commit()
-
-		task.SupplierCatalogItemFieldTask().update()
-		transaction.commit()
-		task.SupplierCatalogItemFieldTask().vacuum()
-		transaction.commit()
-
-		task.SupplierCatalogItemTask().load()
-		transaction.commit()
-		task.SupplierCatalogItemTask().update()
-		transaction.commit()
-		#task.SupplierCatalogItemTask().vacuum()
 		
-		#task.InventoryItemTask().load()
+		for (task_name, method_name) in tasks:
+			subprocess.call(['python2.6', cmd, args.conf_file, task_name, method_name])
 		
-		#sleep(60)
-		
-		task.ProductTask().load()
-		transaction.commit()
-		task.ProductTask().update()
-		transaction.commit()
-		task.ProductTask().sort()
-		transaction.commit()
 
-		#task.ProductDailyStat().load()
-		#task.ProductWeeklyStat().load()
-		#task.ProductMonthlyStat().load()
-		#task.ProductYearlyStat().load()
-
-		#task.ProductPackageTask.update()
-		
-		#task.CatalogTask().load()
-		#task.CatalogCategoryTask().load()
-		#task.CatalogTask().update()
 		print "Sleep..."
 		sleep(60*10) #10 mins
 

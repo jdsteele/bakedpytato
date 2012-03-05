@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import chardet
 import json
 import logging 
+import transaction
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -65,42 +66,39 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		"""Load All"""
 		logger.debug("Begin load_all()")
 		ts = self.term_stat('SupplierCatalog Load')
-
+		tx = transaction.get()
+		
 		try:
-			self.session.begin(subtransactions=True)
 			plugins = self.load_plugins()
-			query = self.session.query(FileImportModel)
+			query = DBSession.query(FileImportModel)
 			if modified_since:
 				query = query.filter(FileImportModel.modified >= modified_since)
 			ts['total'] = query.count()
 			for file_import in query.yield_per(1):
-				#print file_import.name
 				for plug in plugins.itervalues():
 					is_match = plug.match_file_import(file_import)
 					if is_match:
 						self.load_one(plug, file_import)
 						break
-				self.session.expunge(file_import)
+				DBSession.expunge(file_import)
 				ts['done'] += 1
-			self.session.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			tx.abort()
 		finally:
 			ts.finish()
+		transaction.commit()
 		logger.debug("End load_all()")
 
 
 	def load_one(self, plug, file_import):
 		"""Load One"""
-		query = self.session.query(SupplierCatalogModel)
+		query = DBSession.query(SupplierCatalogModel)
 		query = query.filter(SupplierCatalogModel.file_import_id == file_import.id)
 		
-		self.session.begin(subtransactions=True)
 		if query.count() == 0:
 			supplier_catalog = SupplierCatalogModel()
-			self.session.add(supplier_catalog)
+			DBSession.add(supplier_catalog)
 			supplier_catalog.file_import_id = file_import.id
 		else:
 			supplier_catalog = query.one()
@@ -108,7 +106,6 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 			supplier_catalog.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
 			if not supplier_catalog.lock_issue_date:
 				supplier_catalog.issue_date = plug.issue_date(file_import)
-		self.session.commit()
 
 	def update(self):
 		self.update_all()
@@ -124,10 +121,9 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 		logger.debug("Begin update_encoding()")
 		ts = self.term_stat('SupplierCatalog UpdateEncoding')
 		plugins = self.load_plugins()
-
+		tx = transaction.get()
 		try:
-			self.session.begin(subtransactions=True)
-			query = self.session.query(SupplierCatalogModel)
+			query = DBSession.query(SupplierCatalogModel)
 			query = query.order_by(desc(SupplierCatalogModel.created))
 			ts['total'] = query.count()
 			for supplier_catalog in query.yield_per(100):
@@ -140,13 +136,11 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 					if encoding is None:
 						encoding = plug.default_encoding
 					supplier_catalog.encoding = encoding['encoding']
-				self.session.expunge(supplier_catalog.file_import)
+				DBSession.expunge(supplier_catalog.file_import)
 			ts['done'] += 1
-			self.session.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			tx.rollback()
 		finally:
 			ts.finish()
 		logger.debug("update_encoding()")
@@ -154,15 +148,15 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 
 	def sort(self):
 		logger.debug("Begin sort()")
+		tx = transaction.get()
 		try:
-			self.session.begin(subtransactions=True)
-			query = self.session.query(SupplierModel)
+			query = DBSession.query(SupplierModel)
 			ts = self.term_stat('SupplierCatalog Sort', query.count())
 			suppliers = query.all()
 			
 			for supplier in suppliers:
 				#print supplier
-				query = self.session.query(SupplierCatalogModel)
+				query = DBSession.query(SupplierCatalogModel)
 				query = query.filter(SupplierCatalogModel.supplier_id == supplier.id)
 				query = query.order_by(SupplierCatalogModel.issue_date)
 				
@@ -177,11 +171,9 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 					ts['sub_done'] += 1
 				ts['done'] += 1
 				ts['sub_done'] = 0
-			self.session.commit()
 		except Exception:
 			logger.exception("Caught Exception: ")
-			if self.session.transaction is not None:
-				self.session.rollback()
+			tx.rollback()
 		finally:
 			ts.finish()
 		logger.debug("End sort()")

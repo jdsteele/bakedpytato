@@ -15,21 +15,27 @@
 from __future__ import unicode_literals
 
 ### Standard Library
-import logging 
+import chardet
+import json
+import logging
+import transaction
 import uuid
 from datetime import datetime
 from decimal import Decimal
 
 ### Extended Library
-import ttystatus
+from sqlalchemy import desc
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+import ttystatus
 
 ### Application Library
 from bakedpytato import cfg
 from bakedpytato.model import metadata, DBSession
 from bakedpytato.model import FileImportModel
 from bakedpytato.model import SupplierSpecialFilterModel
+#from bakedpytato.model import SupplierSpecialItemModel
 from bakedpytato.model import SupplierSpecialModel
+from bakedpytato.model import SupplierModel
 from bakedpytato.task import SettingTask
 from bakedpytato.task.base_supplier_special_task import BaseSupplierSpecialTask
 
@@ -58,44 +64,56 @@ class SupplierSpecialTask(BaseSupplierSpecialTask):
 
 	def load_all(self, modified_since=None):
 		"""Load All"""
-		pass
 		logger.debug("Begin load_all()")
-		plugins = self.load_plugins()
-		query = self.session.query(FileImportModel)
-		if modified_since:
-			query = query.filter(FileImportModel.modified >= modified_since)
-		ts = self.term_stat('SupplierSpecial Load', query.count())
-		for file_import in query.yield_per(1):
-			#print file_import.name
-			for plug in plugins.itervalues():
-				is_match = plug.match_file_import(file_import)
-				if is_match:
-					self.load_one(plug, file_import)
-					break
-			self.session.expunge(file_import)
-			ts['done'] += 1
-		ts.finish()
+		ts = self.term_stat('SupplierCatalog Load')
+		tx = transaction.get()
+		try:
+			plugins = self.load_plugins()
+			query = DBSession.query(FileImportModel)
+			if modified_since:
+				query = query.filter(FileImportModel.modified >= modified_since)
+			ts['total'] = query.count()
+			for file_import in query.yield_per(1):
+				#print file_import.name
+				for plug in plugins.itervalues():
+					is_match = plug.match_file_import(file_import)
+					if is_match:
+						self.load_one(plug, file_import)
+						break
+				DBSession.expunge(file_import)
+				ts['done'] += 1
+		except Exception:
+			logger.exception("Caught Exception: ")
+			tx.abort()
+		finally:
+			ts.finish()
+		transaction.commit()
 		logger.debug("End load_all()")
 
 
 	def load_one(self, plug, file_import):
 		"""Load One"""
-		pass
-		#query = self.session.query(SupplierCatalogModel)
-		#query = query.filter(SupplierCatalogModel.file_import_id == file_import.id)
+		query = DBSession.query(SupplierSpecialModel)
+		query = query.filter(SupplierSpecialModel.file_import_id == file_import.id)
 		
-		#self.session.begin()
-		#if query.count() == 0:
-			#supplier_catalog = SupplierCatalogModel()
-			#self.session.add(supplier_catalog)
-			#supplier_catalog.file_import_id = file_import.id
-		#else:
-			#supplier_catalog = query.one()
-			#supplier_catalog.supplier_id = plug.supplier_id()
-			#supplier_catalog.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
-			#if not supplier_catalog.lock_issue_date:
-				#supplier_catalog.issue_date = plug.issue_date(file_import)
-		#self.session.commit()
+		if query.count() == 0:
+			supplier_special = SupplierSpecialModel()
+			DBSession.add(supplier_special)
+			supplier_special.file_import_id = file_import.id
+		else:
+			supplier_special = query.one()
+			supplier_special.supplier_id = plug.supplier_id()
+			supplier_special.supplier_special_filter_id = plug.supplier_special_filter_id()
+			#if not supplier_special.lock_issue_date:
+			
+		if True:
+			dates = plug.issue_dates(file_import)
+			if dates is not None:
+				supplier_special.begin_date = dates[0]
+				supplier_special.end_date = dates[1]
+				print 'BEGIN', supplier_special.begin_date
+				print 'END', supplier_special.end_date
+
 
 	def update_all(self):
 		"""Update All"""
@@ -107,12 +125,12 @@ class SupplierSpecialTask(BaseSupplierSpecialTask):
 	def sort(self):
 		pass
 		#logger.debug("Begin sort()")
-		#query = self.session.query(SupplierModel)
+		#query = DBSession.query(SupplierModel)
 		#suppliers = query.all()
 		
 		#for supplier in suppliers:
 			##print supplier
-			#query = self.session.query(SupplierCatalogModel)
+			#query = DBSession.query(SupplierCatalogModel)
 			#query = query.filter(SupplierCatalogModel.supplier_id == supplier.id)
 			#query = query.order_by(SupplierCatalogModel.issue_date)
 			

@@ -18,13 +18,14 @@ from __future__ import unicode_literals
 import csv
 import logging 
 import re
-import cfg
+
 from datetime import datetime
 from decimal import *
 
 #Extended Library
 
 #Application Library
+from bakedpytato import cfg
 
 #This Package
 from plugin.base_supplier_catalog_plugin import BaseSupplierCatalogPlugin
@@ -38,11 +39,14 @@ class SupplierCatalogEmeryPlugin(BaseSupplierCatalogPlugin):
 	def match_file_import(self, file_import):
 		if re.search('lock', file_import.name):
 			return False
-		if re.search('emery', file_import.name):
-			return True
-		if re.match(cfg.emery_user + 'xp-20\d{6}.CSV', file_import.name):
-			return True
-		return False
+		if not re.search(cfg.emery_user + 'xp-20\d{6}.CSV', file_import.name):
+			return False
+		magic = file_import.magic()
+		if magic['mime'] != 'text/plain':
+			return False
+		if magic['magic'] != 'Non-ISO extended-ASCII text, with CRLF line terminators':
+			return False
+		return True
 		
 	def get_items(self, supplier_catalog):
 		content = supplier_catalog.file_import.content
