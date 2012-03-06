@@ -154,6 +154,25 @@ class SupplierSpecialWalthersPlugin(BaseSupplierSpecialPlugin):
 		return None
 
 
-	#def update_fields(self, fields):
+	def update_fields(self, fields):
 		#"""Update Fields"""
-		#pass
+		
+		data = dict()
+		
+		if 'MANU' in fields and fields['MANU'] is not None:
+			data['manufacturer_identifier'] = fields['MANU']
+			
+		if 'ITEM' in fields and fields['ITEM'] is not None:
+			data['product_identifier'] = fields['ITEM']
+
+		if 'RET' in fields and fields['RET'] is not None:
+			data['normal_retail'] = Decimal(fields['RET'])
+
+		if 'DLR' in fields and fields['DLR'] is not None:
+			data['special_cost'] = Decimal(fields['DLR'])
+
+		if 'DLR' in fields and fields['DLR'] is not None:
+			special_discount = Decimal(fields['DISC'].rstrip('%'))
+			data['special_ratio'] = Decimal('100') - special_discount
+
+		return data

@@ -24,6 +24,7 @@ from datetime import date, timedelta
 from decimal import *
 
 ### Extended Library
+import xlrd
 
 ### Application Library
 from plugin.base_supplier_special_plugin import BaseSupplierSpecialPlugin
@@ -51,6 +52,53 @@ class SupplierSpecialWalthersXLSPlugin(BaseSupplierSpecialPlugin):
 		return True
 
 	def get_items(self, supplier_special):
+		content = supplier_special.file_import.content
+		book = xlrd.open_workbook(file_contents=content)
+		del content
+		sheet = book.sheet_by_index(0)
+		
+		col_names = []
+		
+		header_row = 0
+		for header_row in xrange(0, 4):
+			for col in sheet.row(header_row):
+				col_names.append(col.value)
+			if 'Retail' in col_names:
+				break
+			bad_col_names = col_names
+			header_row += 1
+			col_names = []
+			
+		if len(col_names) == 0:
+			logger.warning("Can't Find Header in '%s'", supplier_special.file_import.name)
+			header_row = 0
+			if sheet.ncols == 4:
+				col_names = ['Manu-Item', 'Retail', 'Net', 'Net %']
+			elif sheet.ncols == 5:
+				col_names = ['Manu-Item', 'Retail', 'Net', 'Net %', 'Page']
+			elif sheet.ncols == 8:
+				col_names = ['Manu-Item', 'Description', 'Scale', 'Retail', 'Sale Rtl', 'Net', 'Net %', 'Page']
+			elif sheet.ncols == 10:
+				col_names = ['Manu-Item', 'Description', 'Scale', 'Retail', 'Sale Rtl', 'Net', 'Net %', 'Page', 'Foo', 'Bar']
+			else:
+				logger.warning("Can't Guess Header from size '%s'", sheet.ncols)
+				print bad_col_names
+				return
+
+
+		for y in xrange(header_row + 1, sheet.nrows):
+			data = dict()
+			for x in xrange(sheet.ncols):
+				cell = sheet.cell(y, x)
+				col_name = col_names[x]
+				d = data[col_name] = cell.value
+				#print col_name, d
+			data = self.recode(data)
+			yield data
+		
+		
+		
+		
 		return
 		content = supplier_special.file_import.content
 		lines = re.split("\n", content)
@@ -70,7 +118,6 @@ class SupplierSpecialWalthersXLSPlugin(BaseSupplierSpecialPlugin):
 				m = re.match(pattern, row)
 				if m:
 					break
-			
 			if m:
 				data['MANU-ITEM'] = m.group(1).strip()
 				data['DESCRIPTION'] = m.group(2).strip()
@@ -106,6 +153,15 @@ class SupplierSpecialWalthersXLSPlugin(BaseSupplierSpecialPlugin):
 		return None
 
 
-	#def update_fields(self, fields):
-		#"""Update Fields"""
-		#pass
+	def update_fields(self, fields):
+		"""Update Fields"""
+		
+		data = dict()
+		
+		if 'MANU-ITEM' in fields and fields['MANU-ITEM'] is not None:
+			(man, item) = fields['MANU-ITEM'].split('-', 1)
+			data['manufacturer_identifier'] = man
+			data['product_identifier'] = item
+
+
+		return data

@@ -102,9 +102,10 @@ class SupplierSpecialTask(BaseSupplierSpecialTask):
 			supplier_special.file_import_id = file_import.id
 		else:
 			supplier_special = query.one()
-			supplier_special.supplier_id = plug.supplier_id()
-			supplier_special.supplier_special_filter_id = plug.supplier_special_filter_id()
-			#if not supplier_special.lock_issue_date:
+		
+		supplier_special.supplier_id = plug.supplier_id()
+		supplier_special.supplier_special_filter_id = plug.supplier_special_filter_id()
+		#if not supplier_special.lock_issue_date:
 			
 		if True:
 			dates = plug.issue_dates(file_import)

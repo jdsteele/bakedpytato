@@ -123,7 +123,6 @@ class SupplierSpecialItemVersionTask(BaseSupplierSpecialTask):
 			except NoResultFound:
 				supplier_special_item_field = SupplierSpecialItemFieldModel()
 				DBSession.add(supplier_special_item_field)
-		
 			supplier_special_item_field.fields = j.encode('utf-8')
 			supplier_special_item_field.checksum = checksum
 			supplier_special_item_field.supplier_id = supplier_special.supplier_id
@@ -160,45 +159,45 @@ class SupplierSpecialItemVersionTask(BaseSupplierSpecialTask):
 		self.update_all()
 		logger.debug("End update()")
 
-	def update_all(self):
-		logger.debug("Begin update_all()")
-		self.ts = self.term_stat("SupplierSpecialItemVersion update")
-		tx = transaction.get()
-		try:
-			self.plugins = self.load_plugins()
+	#def update_all(self):
+		#logger.debug("Begin update_all()")
+		#self.ts = self.term_stat("SupplierSpecialItemVersion update")
+		#tx = transaction.get()
+		#try:
+			#self.plugins = self.load_plugins()
 
-			query = DBSession.query(SupplierSpecialModel)
-			self.ts['total'] = query.count()
+			#query = DBSession.query(SupplierSpecialModel)
+			#self.ts['total'] = query.count()
 
-			for plug in self.plugins.itervalues():
-				supplier_special_filter_id = plug.supplier_special_filter_id()
-				model_name = plug.version_model()  + 'Model'
-				VersionModel = getattr(model, model_name)
-				query = DBSession.query(SupplierSpecialModel)
-				query = query.filter(SupplierSpecialModel.supplier_special_filter_id == supplier_special_filter_id)
-				for supplier_special in query.yield_per(1):
-					self.update_from_supplier_special(supplier_special, VersionModel)
-					self.ts['done'] += 1
-					DBSession.flush()
-		except Exception:
-			logger.exception('Caught Exception: ')
-			tx.abort()
-		finally:
-			self.ts.finish()
-		transaction.commit()
-		logger.debug("End update_all()")
+			#for plug in self.plugins.itervalues():
+				#supplier_special_filter_id = plug.supplier_special_filter_id()
+				#model_name = plug.version_model()  + 'Model'
+				#VersionModel = getattr(model, model_name)
+				#query = DBSession.query(SupplierSpecialModel)
+				#query = query.filter(SupplierSpecialModel.supplier_special_filter_id == supplier_special_filter_id)
+				#for supplier_special in query.yield_per(1):
+					#self.update_from_supplier_special(supplier_special, VersionModel)
+					#self.ts['done'] += 1
+					#DBSession.flush()
+		#except Exception:
+			#logger.exception('Caught Exception: ')
+			#tx.abort()
+		#finally:
+			#self.ts.finish()
+		#transaction.commit()
+		#logger.debug("End update_all()")
 	
-	def update_from_supplier_special(self, supplier_special, VersionModel):
-		query = DBSession.query(VersionModel)
-		query = query.filter(VersionModel.supplier_special_id == supplier_special.id)
-		query = query.filter(VersionModel.effective != supplier_special.issue_date)
-		c = query.count()
-		self.ts['sub_done'] = c
-		if c > 0:
-			values = dict()
-			values['effective'] = supplier_special.issue_date
-			values['updated'] = datetime.now()
-			query.update(values, synchronize_session=False)
+	#def update_from_supplier_special(self, supplier_special, VersionModel):
+		#query = DBSession.query(VersionModel)
+		#query = query.filter(VersionModel.supplier_special_id == supplier_special.id)
+		#query = query.filter(VersionModel.effective != supplier_special.issue_date)
+		#c = query.count()
+		#self.ts['sub_done'] = c
+		#if c > 0:
+			#values = dict()
+			#values['effective'] = supplier_special.issue_date
+			#values['updated'] = datetime.now()
+			#query.update(values, synchronize_session=False)
 
 	def vacuum(self):
 		logger.debug('Begin vacuum()')

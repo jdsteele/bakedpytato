@@ -43,5 +43,5 @@ class BaseSupplierSpecialTask(BaseTask):
 				plugins[supplier_special_filter.id] = plug
 				plugins[supplier_special_filter.supplier_id] = plug
 			else:
-				logger.warning("Plugin %s Not Found", plugin_name)
+				logger.warning("Plugin '%s' Not Found", plugin_name)
 		return plugins

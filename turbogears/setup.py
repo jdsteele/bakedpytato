@@ -29,7 +29,8 @@ setup(
         "argparse",
         "genshi",
         "tw.jquery",
-        "python-magic"
+        "python-magic",
+        "xlrd"
                 ],
     setup_requires=["PasteScript >= 1.7"],
     paster_plugins=['PasteScript', 'Pylons', 'TurboGears2', 'tg.devtools'],

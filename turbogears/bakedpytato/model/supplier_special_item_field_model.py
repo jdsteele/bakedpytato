@@ -19,11 +19,13 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import deferred
 from bakedpytato.model.base_model import BaseModel, DefaultMixin
 from bakedpytato.model import metadata, DBSession
+from sqlalchemy.event import listen
 
 import json
 import logging 
 
 logger = logging.getLogger(__name__)
+
 
 class SupplierSpecialItemFieldModel(BaseModel, DefaultMixin):
 	__tablename__ = 'supplier_special_item_fields'
@@ -34,22 +36,28 @@ class SupplierSpecialItemFieldModel(BaseModel, DefaultMixin):
 	checksum = Column(String(40), nullable=False)
 	#compressed = Column(Boolean, default=None)
 	#cost = Column(Numeric, default = None)
-	#fields = deferred(Column(LargeBinary), group='content')
+	fields = deferred(Column(LargeBinary), group='content')
 	#ghost = Column(Boolean, default=False, nullable=False)
-	#manufacturer_identifier = Column(String, default = None)
+	manufacturer_identifier = Column(String, default = None)
 	#name = Column(String, default = None)
+	normal_retail = Column(Numeric, default = None)
 	#phased_out = Column(Boolean, default = None)
-	#product_identifier = Column(String, default = None)
-	#retail = Column(Numeric, default = None)
+	product_identifier = Column(String, default = None)
 	#scale_identifier = Column(String, default = None)
 	#special = Column(Boolean, default = None)
-	#special_cost = Column(Numeric, default = None)
+	special_cost = Column(Numeric, default = None)
+	special_retail = Column(Numeric, default = None)
 	#stock = Column(Boolean, default = None)
 	#supplier_catalog_item_version_count = Column(Integer, default = None)
-	#supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
-	#supplier_catalog_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_catalog_filters.id'))
+	supplier_id = Column(UUID(as_uuid=True), ForeignKey('suppliers.id'))
+	supplier_special_filter_id = Column(UUID(as_uuid=True), ForeignKey('supplier_special_filters.id'))
 	updated = Column(DateTime, default=None)
 	vacuumed = Column(DateTime, default=None)
+
+
+
+
+
 
 	def get_fields(self):
 		if self.fields is None:
