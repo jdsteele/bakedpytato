@@ -102,10 +102,11 @@ class SupplierCatalogTask(BaseSupplierCatalogTask):
 			supplier_catalog.file_import_id = file_import.id
 		else:
 			supplier_catalog = query.one()
-			supplier_catalog.supplier_id = plug.supplier_id()
-			supplier_catalog.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
-			if not supplier_catalog.lock_issue_date:
-				supplier_catalog.issue_date = plug.issue_date(file_import)
+			
+		supplier_catalog.supplier_id = plug.supplier_id()
+		supplier_catalog.supplier_catalog_filter_id = plug.supplier_catalog_filter_id()
+		if not supplier_catalog.lock_issue_date:
+			supplier_catalog.issue_date = plug.issue_date(file_import)
 
 	def update(self):
 		self.update_all()
